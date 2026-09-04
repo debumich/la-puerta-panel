@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -801,6 +802,18 @@
   .leader-manager .add-form button{
     padding:8px 16px;
   }
+
+  /* Исправление для выпадающего списка в управлении — тёмный фон */
+  .leader-manager .add-form select {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    appearance: auto;
+  }
+  .leader-manager .add-form select option {
+    background: var(--bg-elevated);
+    color: var(--text);
+  }
 </style>
 </head>
 <body>
@@ -972,7 +985,7 @@
 
 <script>
 // =======================================================================
-// 1. Firebase Config (уже вставлен с вашими данными)
+// 1. Firebase Config
 // =======================================================================
 const firebaseConfig = {
   apiKey: "AIzaSyA17bA1P5e8KSB2GK-LwVoiwgG4RvaT3P8",
@@ -992,7 +1005,7 @@ const db = firebase.firestore();
 // 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // =======================================================================
 const API_URL = 'https://la-puerta-proxy.vercel.app/';
-const ADMIN_EMAILS = ['azovskiyr@ya.ru', 'kseniadddd0101@gmail.com'];
+const ADMIN_EMAILS = ['azovskiyr@ya.ru'];
 
 const CATEGORY_NAMES = {
   'gov': 'Государственные',
@@ -1157,11 +1170,15 @@ function login(){
   localStorage.setItem('pendingRole', role);
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
-  auth.signInWithPopup(provider).catch(err => {
-    document.getElementById('authError').style.display = 'block';
-    document.getElementById('authError').textContent = err.message;
-    toast('Ошибка входа');
-  });
+  auth.signInWithPopup(provider)
+    .then(result => {
+      // Успешный вход — не показываем дополнительных сообщений, handleUser сработает
+    })
+    .catch(err => {
+      document.getElementById('authError').style.display = 'block';
+      document.getElementById('authError').textContent = err.message;
+      toast('Ошибка входа: ' + err.message);
+    });
 }
 
 function logout(){
@@ -1224,8 +1241,8 @@ async function loadLeadersList(){
     html += `</tbody></table>`;
     container.innerHTML = html;
   } catch(err){
-    toast('Ошибка загрузки списка лидеров');
-    console.error(err);
+    console.warn('Ошибка загрузки списка лидеров:', err);
+    // Не показываем тост, чтобы не смущать пользователя
   }
 }
 
@@ -1242,8 +1259,8 @@ async function addLeader(){
     document.getElementById('newLeaderEmail').value = '';
     loadLeadersList();
   } catch(err){
-    toast('Ошибка добавления');
-    console.error(err);
+    console.error('Ошибка добавления:', err);
+    toast('Ошибка добавления: ' + (err.message || 'неизвестная причина'));
   }
 }
 
@@ -1254,8 +1271,8 @@ async function removeLeader(email){
     toast(`Лидер ${email} удалён`);
     loadLeadersList();
   } catch(err){
-    toast('Ошибка удаления');
-    console.error(err);
+    console.error('Ошибка удаления:', err);
+    toast('Ошибка удаления: ' + (err.message || 'неизвестная причина'));
   }
 }
 
@@ -1570,7 +1587,7 @@ function updateLastUpdateText(){
   el.textContent = 'обновлено ' + d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
 
-function renderLeaders(){ /* полностью как в предыдущей версии */ 
+function renderLeaders(){
   const root = document.getElementById('leadersRoot');
   root.innerHTML = '';
   if(!leaderData){
@@ -1617,7 +1634,7 @@ function renderLeaders(){ /* полностью как в предыдущей �
   document.getElementById('leaderCount').textContent = total;
 }
 
-function renderCard(faction, entry){ /* без изменений */ 
+function renderCard(faction, entry){
   const card = document.createElement('div');
   card.className = 'leader-card';
   if(!entry){
@@ -1765,9 +1782,14 @@ initAuth();
 
 auth.onAuthStateChanged(user => {
   if(user && ADMIN_EMAILS.includes(user.email)){
-    setTimeout(loadLeadersList, 500);
+    setTimeout(() => {
+      if(currentUser && currentUser.role === 'admin') {
+        loadLeadersList();
+      }
+    }, 500);
   }
 });
 </script>
 </body>
 </html>
+```

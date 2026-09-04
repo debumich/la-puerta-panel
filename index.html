@@ -12,7 +12,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
 <style>
-  /* ===== все стили без изменений (ваши существующие) ===== */
   :root{
     --bg: #080c1a;
     --bg-elevated: #0d1226;
@@ -749,7 +748,6 @@
     color:#fff;
   }
 
-  /* дополнительный стиль для таблицы управления лидерами */
   .leader-manager{
     margin-top:10px;
   }
@@ -798,20 +796,18 @@
     font-size:13px;
     font-family:inherit;
   }
+  .leader-manager .add-form select{
+    background:var(--bg-elevated);
+    color:var(--text);
+    border:1px solid var(--border);
+    appearance:auto;
+  }
+  .leader-manager .add-form select option{
+    background:var(--bg-elevated);
+    color:var(--text);
+  }
   .leader-manager .add-form button{
     padding:8px 16px;
-  }
-
-  /* Исправление для выпадающего списка в управлении — тёмный фон */
-  .leader-manager .add-form select {
-    background: var(--bg-elevated);
-    color: var(--text);
-    border: 1px solid var(--border);
-    appearance: auto;
-  }
-  .leader-manager .add-form select option {
-    background: var(--bg-elevated);
-    color: var(--text);
   }
 </style>
 </head>
@@ -836,7 +832,7 @@
             <button class="tab-btn report-sub-btn" data-report="crime">Криминальные</button>
           </div>
         </div>
-        <button class="tab-btn" data-tab="settings">Настройки</button>
+        <button class="tab-btn" data-tab="settings" id="settingsTab" style="display:none;">Настройки</button>
         <button class="tab-btn" data-tab="leaders-manager" id="managerTab" style="display:none;">Управление</button>
       </div>
     </div>
@@ -857,18 +853,7 @@
   <div class="modal-overlay" id="authModal">
     <div class="modal">
       <h2>Авторизация</h2>
-      <p>Выберите роль и, если вы лидер, укажите фракцию.</p>
-      <div class="field">
-        <label>Роль</label>
-        <select id="authRole">
-          <option value="leader">Лидер фракции</option>
-          <option value="admin">Администратор</option>
-        </select>
-      </div>
-      <div class="field" id="authFactionField">
-        <label>Ваша фракция</label>
-        <select id="authFaction"></select>
-      </div>
+      <p>Войдите через Google, чтобы продолжить.</p>
       <div class="field" id="authGoogleField">
         <button class="btn google-btn" id="googleLoginBtn">
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
@@ -1085,7 +1070,7 @@ function escapeHtml(str){
 }
 
 // =======================================================================
-// 4. АВТОРИЗАЦИЯ (Firebase)
+// 4. АВТОРИЗАЦИЯ (Firebase) — БЕЗ ВЫБОРА РОЛИ
 // =======================================================================
 function initAuth(){
   auth.onAuthStateChanged(user => {
@@ -1143,36 +1128,12 @@ async function handleUser(user){
 function showAuthModal(){
   document.getElementById('authModal').classList.add('open');
   document.getElementById('authError').style.display = 'none';
-  fillFactionSelect();
-}
-
-function fillFactionSelect(){
-  const sel = document.getElementById('authFaction');
-  if(!leaderData){
-    sel.innerHTML = '<option value="">Загрузка данных...</option>';
-    return;
-  }
-  const factions = Object.keys(leaderData).sort();
-  sel.innerHTML = factions.map(f => `<option value="${f}">${f}</option>`).join('');
 }
 
 function login(){
-  const role = document.getElementById('authRole').value;
-  const faction = document.getElementById('authFaction').value;
-  if(role === 'leader'){
-    if(!faction){
-      toast('Выберите фракцию');
-      return;
-    }
-    localStorage.setItem('pendingFaction', faction);
-  }
-  localStorage.setItem('pendingRole', role);
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   auth.signInWithPopup(provider)
-    .then(result => {
-      // Успешный вход — не показываем дополнительных сообщений, handleUser сработает
-    })
     .catch(err => {
       document.getElementById('authError').style.display = 'block';
       document.getElementById('authError').textContent = err.message;
@@ -1184,8 +1145,6 @@ function logout(){
   auth.signOut().then(() => {
     currentUser = null;
     localStorage.removeItem('user');
-    localStorage.removeItem('pendingFaction');
-    localStorage.removeItem('pendingRole');
     updateUIForUser();
     renderReports('gov');
     renderReports('crime');
@@ -1198,12 +1157,14 @@ function updateUIForUser(){
   const roleDisplay = document.getElementById('userRoleDisplay');
   const emailDisplay = document.getElementById('userEmailDisplay');
   const logoutBtn = document.getElementById('logoutBtn');
+  const settingsTab = document.getElementById('settingsTab');
   const managerTab = document.getElementById('managerTab');
 
   if(!currentUser){
     roleDisplay.textContent = 'Гость';
     emailDisplay.textContent = '';
     logoutBtn.textContent = 'Войти';
+    settingsTab.style.display = 'none';
     managerTab.style.display = 'none';
     return;
   }
@@ -1212,8 +1173,10 @@ function updateUIForUser(){
   emailDisplay.textContent = currentUser.email;
   logoutBtn.textContent = 'Выйти';
   if(currentUser.role === 'admin'){
+    settingsTab.style.display = 'inline-block';
     managerTab.style.display = 'inline-block';
   } else {
+    settingsTab.style.display = 'none';
     managerTab.style.display = 'none';
   }
 }
@@ -1241,7 +1204,6 @@ async function loadLeadersList(){
     container.innerHTML = html;
   } catch(err){
     console.warn('Ошибка загрузки списка лидеров:', err);
-    // Не показываем тост, чтобы не смущать пользователя
   }
 }
 
@@ -1286,26 +1248,46 @@ function fillManagerFactionSelect(){
 }
 
 // =======================================================================
-// 6. ОТЧЁТЫ (с учётом роли)
+// 6. ОТЧЁТЫ (Firestore) — общие для всех пользователей
 // =======================================================================
-function reportsKey(type){ return type === 'gov' ? 'govReports' : 'crimeReports'; }
-function getReports(type){ try{ return JSON.parse(localStorage.getItem(reportsKey(type)) || '[]'); }catch(e){ return []; } }
-function setReports(type, arr){ localStorage.setItem(reportsKey(type), JSON.stringify(arr)); }
+async function loadReports(){
+  if(!currentUser) return;
+  try {
+    let query = db.collection('reports').orderBy('timestamp', 'desc');
+    if(currentUser.role === 'leader'){
+      query = query.where('faction', '==', currentUser.faction);
+    }
+    const snapshot = await query.get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch(err){
+    console.error('Ошибка загрузки отчётов:', err);
+    return [];
+  }
+}
 
-function renderReports(type){
+async function renderReports(type){
   const list = document.getElementById(`${type}-list`);
   const start = document.getElementById(`${type}-filter-start`).value;
   const end = document.getElementById(`${type}-filter-end`).value;
-  let reports = getReports(type);
-  if(currentUser && currentUser.role === 'leader'){
-    reports = reports.filter(r => r.faction === currentUser.faction);
-  }
+  const allReports = await loadReports();
+  let reports = allReports;
   if(start) reports = reports.filter(r => r.date >= start);
   if(end) reports = reports.filter(r => r.date <= end);
   if(currentUser && currentUser.role === 'admin'){
     const myFactions = getMyFactions();
     if(myFactions.length) reports = reports.filter(r => myFactions.includes(r.faction));
   }
+  // дополнительная фильтрация по типу (gov/crime) — по категории фракции
+  const categoryMap = {
+    'gov': ['gov', 'judicial'],
+    'crime': ['street', 'syndicate', 'other']
+  };
+  const allowedCategories = categoryMap[type] || [];
+  reports = reports.filter(r => {
+    const entry = leaderData?.[r.faction];
+    return entry && allowedCategories.includes(entry.category);
+  });
+
   if(reports.length === 0){
     list.innerHTML = '<div class="empty-state">Отчётов пока нет</div>';
     return;
@@ -1317,7 +1299,7 @@ function renderReports(type){
           <div class="r-name">${escapeHtml(r.name)} (${escapeHtml(r.faction)})</div>
           <div class="r-date">${r.date}</div>
         </div>
-        ${currentUser && currentUser.role === 'admin' ? `<button class="r-delete" onclick="deleteReport('${type}', ${r.id})">Удалить</button>` : ''}
+        ${currentUser && currentUser.role === 'admin' ? `<button class="r-delete" onclick="deleteReport('${type}', '${r.id}')">Удалить</button>` : ''}
       </div>
       ${r.problems ? `<div class="r-field"><b>Проблемы:</b> ${escapeHtml(r.problems)}</div>` : ''}
       ${r.improvements ? `<div class="r-field"><b>Улучшения:</b> ${escapeHtml(r.improvements)}</div>` : ''}
@@ -1326,7 +1308,7 @@ function renderReports(type){
   `).join('');
 }
 
-function saveReport(type){
+async function saveReport(type){
   const prefix = type === 'gov' ? 'reportGov' : 'reportCrime';
   let faction = document.getElementById(prefix + 'Faction').value;
   if(currentUser && currentUser.role === 'leader'){
@@ -1341,26 +1323,42 @@ function saveReport(type){
     toast('Заполните фракцию, имя лидера и дату');
     return;
   }
-  const reports = getReports(type);
-  reports.unshift({ id: Date.now(), faction, name, date, problems, improvements, comment });
-  setReports(type, reports);
-  document.getElementById(prefix + 'Problems').value = '';
-  document.getElementById(prefix + 'Improvements').value = '';
-  document.getElementById(prefix + 'Comment').value = '';
-  document.getElementById(prefix + 'Date').value = '';
-  toast('Отчёт сохранён');
-  renderReports(type);
+  try {
+    await db.collection('reports').add({
+      faction,
+      name,
+      date,
+      problems,
+      improvements,
+      comment,
+      authorEmail: currentUser.email,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById(prefix + 'Problems').value = '';
+    document.getElementById(prefix + 'Improvements').value = '';
+    document.getElementById(prefix + 'Comment').value = '';
+    document.getElementById(prefix + 'Date').value = '';
+    toast('Отчёт сохранён');
+    renderReports(type);
+  } catch(err){
+    console.error('Ошибка сохранения отчёта:', err);
+    toast('Ошибка сохранения отчёта: ' + err.message);
+  }
 }
 
-function deleteReport(type, id){
+async function deleteReport(type, docId){
   if(!currentUser || currentUser.role !== 'admin'){
     toast('У вас нет прав на удаление');
     return;
   }
-  const reports = getReports(type).filter(r => r.id !== id);
-  setReports(type, reports);
-  renderReports(type);
-  toast('Отчёт удалён');
+  try {
+    await db.collection('reports').doc(docId).delete();
+    toast('Отчёт удалён');
+    renderReports(type);
+  } catch(err){
+    console.error('Ошибка удаления:', err);
+    toast('Ошибка удаления: ' + err.message);
+  }
 }
 
 function clearFilter(type){
@@ -1562,9 +1560,10 @@ async function fetchLeaders(force){
       initReportSelects();
       updateLeaderName('gov');
       updateLeaderName('crime');
-      fillFactionSelect();
       fillManagerFactionSelect();
       if(currentUser && currentUser.role === 'admin') loadLeadersList();
+      renderReports('gov');
+      renderReports('crime');
     } else throw new Error('Пустой ответ API');
   }catch(err){
     console.error(err);
@@ -1747,11 +1746,6 @@ document.getElementById('refreshBtn').addEventListener('click', () => fetchLeade
 document.getElementById('logoutBtn').addEventListener('click', function(){
   if(currentUser) logout(); else showAuthModal();
 });
-document.getElementById('authRole').addEventListener('change', function(){
-  const factionField = document.getElementById('authFactionField');
-  if(this.value === 'leader') factionField.style.display = 'block';
-  else factionField.style.display = 'none';
-});
 document.getElementById('googleLoginBtn').addEventListener('click', login);
 
 // =======================================================================
@@ -1767,18 +1761,15 @@ if(leaderData){
   initReportSelects();
   updateLeaderName('gov');
   updateLeaderName('crime');
-  fillFactionSelect();
   fillManagerFactionSelect();
 } else {
   document.getElementById('settingsCategories').innerHTML = '<div class="empty-state">Загрузите данные, чтобы увидеть фракции</div>';
   document.getElementById('myFactionsChips').innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
 }
 
-renderReports('gov');
-renderReports('crime');
-fetchLeaders(false);
 initAuth();
 
+// При загрузке админом — подгружаем список лидеров
 auth.onAuthStateChanged(user => {
   if(user && ADMIN_EMAILS.includes(user.email)){
     setTimeout(() => {
@@ -1788,6 +1779,15 @@ auth.onAuthStateChanged(user => {
     }, 500);
   }
 });
+
+// Загружаем отчёты при инициализации
+setTimeout(() => {
+  renderReports('gov');
+  renderReports('crime');
+}, 1000);
+
+// Первая загрузка данных с форума
+fetchLeaders(false);
 </script>
 </body>
 </html>

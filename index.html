@@ -360,7 +360,6 @@
     background: rgba(255,255,255,0.06);
   }
   .field select option{ background: #0d1226; }
-  .settings-panel select[multiple]{ height:200px; }
   .filter-row{
     display:flex;
     gap:8px;
@@ -418,58 +417,112 @@
     transform: translateX(-50%) translateY(0);
   }
 
+  /* ===== НОВЫЙ ДИЗАЙН НАСТРОЕК ===== */
   .settings-panel{
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 16px 18px;
-    margin-bottom: 20px;
+    padding: 18px 20px;
   }
-  .settings-panel .field{
+  .settings-panel h3{
+    margin: 0 0 6px 0;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .settings-panel .sub{
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: block;
+  }
+  .faction-toggle-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin: 12px 0 16px;
+  }
+  .faction-toggle-item{
+    background: var(--card-hover);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    color: var(--text-dim);
+  }
+  .faction-toggle-item:hover{
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+    color: var(--text);
+  }
+  .faction-toggle-item.active{
+    background: var(--gradient);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(124,92,255,0.25);
+  }
+  .faction-toggle-item.active:hover{
+    filter: brightness(1.05);
+  }
+  .faction-toggle-item .indicator{
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    background: var(--grey);
+    transition: background 0.15s ease;
+  }
+  .faction-toggle-item.active .indicator{
+    background: var(--green);
+    box-shadow: 0 0 6px rgba(61,220,132,0.5);
+  }
+  .settings-actions{
     display:flex;
+    gap:10px;
     flex-wrap:wrap;
-    align-items:center;
-    gap:12px;
+    margin-bottom: 12px;
   }
-  .settings-panel .field label{
-    margin-bottom:0;
-    min-width:140px;
+  .settings-actions .btn{
+    padding: 6px 14px;
+    font-size: 12px;
   }
-  .settings-panel .field select{
-    flex:1;
-    min-width:200px;
-  }
-  .settings-panel .field .btn{
-    flex-shrink:0;
-  }
-  .chip-group{
+  .selected-chips{
     display:flex;
     flex-wrap:wrap;
     gap:6px;
+    margin-top: 6px;
   }
-  .chip{
+  .selected-chips .chip{
     background: var(--card-hover);
     border:1px solid var(--border);
     border-radius:999px;
-    padding:4px 12px;
+    padding: 2px 12px 2px 14px;
     font-size:12px;
     display:inline-flex;
     align-items:center;
     gap:6px;
+    color: var(--text);
   }
-  .chip .remove{
+  .selected-chips .chip .remove{
     cursor:pointer;
     color: var(--red);
     font-weight:700;
+    font-size:14px;
+    line-height:1;
+    margin-left:2px;
   }
-
-  .report-sub-tabs{ display:none; }
-  .report-sub-tabs.active{ display:flex; gap:6px; margin-bottom:16px; }
-  .report-sub-tabs .tab-btn{ background:var(--card); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-size:12px; }
-  .report-sub-tabs .tab-btn.active{ background:var(--gradient); color:#fff; border:none; }
-
-  .report-panel{ display:none; }
-  .report-panel.active{ display:block; }
+  .selected-chips .chip .remove:hover{
+    color: #ff7a7a;
+  }
+  .empty-chips{
+    color: var(--text-faint);
+    font-size: 13px;
+  }
 </style>
 </head>
 <body>
@@ -580,24 +633,22 @@
     </div>
   </section>
 
-  <!-- ========= НАСТРОЙКИ ========= -->
+  <!-- ========= НАСТРОЙКИ (НОВЫЙ ДИЗАЙН) ========= -->
   <section class="panel" id="panel-settings">
     <div class="settings-panel">
-      <h3 style="margin-top:0;">Мои курируемые фракции</h3>
-      <p style="color:var(--text-dim); font-size:13px;">Выберите фракции, которые вы курируете. Остальные будут скрыты из списка лидеров и отчётов.</p>
-      <div class="field">
-        <label>Фракции (зажмите Ctrl для множественного выбора):</label>
-        <select id="factionSelector" multiple>
-          <!-- заполняется динамически -->
-        </select>
-        <div>
-          <button class="btn" onclick="addSelectedFactions()">➕ Добавить выбранные</button>
-          <button class="btn" onclick="clearMyFactions()">🗑️ Очистить все</button>
-        </div>
+      <h3>Курируемые фракции</h3>
+      <span class="sub">Выберите фракции, с которыми работаете. Остальные будут скрыты из общего списка и отчётов.</span>
+      <div class="faction-toggle-grid" id="factionToggleGrid">
+        <!-- карточки-переключатели заполняются скриптом -->
       </div>
-      <div style="margin-top:12px;">
-        <label>Вы курируете:</label>
-        <div id="myFactionsChips" class="chip-group"></div>
+      <div class="settings-actions">
+        <button class="btn" onclick="selectAllFactions()">Выбрать всё</button>
+        <button class="btn" onclick="deselectAllFactions()">Сбросить всё</button>
+        <span style="margin-left:auto; color:var(--text-faint); font-size:12px;" id="selectedCounter">Выбрано: 0</span>
+      </div>
+      <div>
+        <label style="font-size:12px; color:var(--text-dim);">Ваш список:</label>
+        <div class="selected-chips" id="myFactionsChips"></div>
       </div>
     </div>
   </section>
@@ -683,7 +734,7 @@ function escapeHtml(str){
 }
 
 // ============================================================
-// НАСТРОЙКИ ПОЛЬЗОВАТЕЛЯ
+// РАБОТА С КУРИРУЕМЫМИ ФРАКЦИЯМИ (НОВЫЙ ПОДХОД)
 // ============================================================
 function getMyFactions(){
   try{
@@ -694,43 +745,69 @@ function getMyFactions(){
 
 function setMyFactions(arr){
   localStorage.setItem('myFactions', JSON.stringify(arr));
+  renderFactionToggles();
   renderMyFactionsChips();
   renderLeaders();
   renderReports('gov');
   renderReports('crime');
+  updateCounter();
 }
 
-function addSelectedFactions(){
-  const sel = document.getElementById('factionSelector');
-  const selected = Array.from(sel.selectedOptions).map(o => o.value);
+function toggleFaction(factionKey){
   const current = getMyFactions();
-  const newSet = new Set([...current, ...selected]);
-  setMyFactions(Array.from(newSet));
-  toast('Фракции добавлены');
+  const idx = current.indexOf(factionKey);
+  if (idx > -1) {
+    current.splice(idx, 1);
+  } else {
+    current.push(factionKey);
+  }
+  setMyFactions(current);
+  toast(current.includes(factionKey) ? `Фракция "${factionKey}" добавлена` : `Фракция "${factionKey}" удалена`);
 }
 
-function clearMyFactions(){
+function selectAllFactions(){
+  if (!leaderData) return;
+  const all = Object.keys(leaderData);
+  setMyFactions(all);
+  toast('Выбраны все фракции');
+}
+
+function deselectAllFactions(){
   setMyFactions([]);
-  toast('Список очищен');
+  toast('Все фракции сняты');
+}
+
+function renderFactionToggles(){
+  const container = document.getElementById('factionToggleGrid');
+  if (!leaderData) {
+    container.innerHTML = '<div class="empty-state">Загрузите данные, чтобы увидеть фракции</div>';
+    return;
+  }
+  const my = getMyFactions();
+  const factions = Object.keys(leaderData).sort();
+  container.innerHTML = factions.map(key => {
+    const active = my.includes(key) ? 'active' : '';
+    return `<div class="faction-toggle-item ${active}" onclick="toggleFaction('${key}')">
+      <span class="indicator"></span>${key}
+    </div>`;
+  }).join('');
 }
 
 function renderMyFactionsChips(){
   const container = document.getElementById('myFactionsChips');
   const list = getMyFactions();
   if (list.length === 0) {
-    container.innerHTML = '<span style="color:var(--text-dim); font-size:13px;">Вы не выбрали ни одной фракции. Отображаются все.</span>';
+    container.innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
     return;
   }
-  container.innerHTML = list.map(f => {
-    const label = leaderData && leaderData[f] ? f : f;
-    return `<span class="chip">${label} <span class="remove" onclick="removeMyFaction('${f}')">✕</span></span>`;
-  }).join('');
+  container.innerHTML = list.map(f => `
+    <span class="chip">${f} <span class="remove" onclick="toggleFaction('${f}')">✕</span></span>
+  `).join('');
 }
 
-function removeMyFaction(f){
-  const current = getMyFactions().filter(x => x !== f);
-  setMyFactions(current);
-  toast('Фракция удалена');
+function updateCounter(){
+  const count = getMyFactions().length;
+  document.getElementById('selectedCounter').textContent = `Выбрано: ${count}`;
 }
 
 // ============================================================
@@ -764,8 +841,11 @@ async function fetchLeaders(force){
       setStatus(data.stale ? 'offline' : 'online', data.stale ? 'Устаревшие данные' : 'Онлайн');
       if (data.stale) toast('Не удалось получить свежие данные, показан последний кэш');
       else if (force) toast('Данные обновлены');
-      // обновляем динамические списки
-      initFactionSelector();
+      // обновляем все динамические элементы
+      renderFactionToggles();
+      renderMyFactionsChips();
+      updateCounter();
+      initReportSelects();
       updateLeaderName('gov');
       updateLeaderName('crime');
     } else throw new Error('Пустой ответ API');
@@ -790,7 +870,7 @@ function updateLastUpdateText(){
 }
 
 // ============================================================
-// ОТРИСОВКА ЛИДЕРОВ (динамическая группировка)
+// ОТРИСОВКА ЛИДЕРОВ (ДИНАМИЧЕСКАЯ)
 // ============================================================
 function renderLeaders(){
   const root = document.getElementById('leadersRoot');
@@ -913,6 +993,21 @@ function updateLeaderName(type){
 }
 
 // ============================================================
+// ДИНАМИЧЕСКОЕ ЗАПОЛНЕНИЕ СПИСКОВ В ОТЧЁТАХ
+// ============================================================
+function initReportSelects(){
+  if (!leaderData) return;
+  const factions = Object.keys(leaderData).map(key => ({ key, label: key }));
+  const govFactions = factions.filter(f => leaderData[f.key].category === 'gov' || leaderData[f.key].category === 'judicial');
+  const crimeFactions = factions.filter(f => leaderData[f.key].category === 'street' || leaderData[f.key].category === 'syndicate' || leaderData[f.key].category === 'other');
+
+  const govSelect = document.getElementById('reportGovFaction');
+  const crimeSelect = document.getElementById('reportCrimeFaction');
+  govSelect.innerHTML = govFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
+  crimeSelect.innerHTML = crimeFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
+}
+
+// ============================================================
 // ОТЧЁТЫ
 // ============================================================
 function reportsKey(type){ return type === 'gov' ? 'govReports' : 'crimeReports'; }
@@ -1010,25 +1105,6 @@ function renderReports(type){
 }
 
 // ============================================================
-// ДИНАМИЧЕСКОЕ ЗАПОЛНЕНИЕ СПИСКОВ
-// ============================================================
-function initFactionSelector(){
-  if (!leaderData) return;
-  const factions = Object.keys(leaderData).map(key => ({ key, label: key }));
-  const sel = document.getElementById('factionSelector');
-  sel.innerHTML = factions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
-
-  // также обновляем выпадающие списки в отчётах
-  const govFactions = factions.filter(f => leaderData[f.key].category === 'gov' || leaderData[f.key].category === 'judicial');
-  const crimeFactions = factions.filter(f => leaderData[f.key].category === 'street' || leaderData[f.key].category === 'syndicate' || leaderData[f.key].category === 'other');
-
-  const govSelect = document.getElementById('reportGovFaction');
-  const crimeSelect = document.getElementById('reportCrimeFaction');
-  govSelect.innerHTML = govFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
-  crimeSelect.innerHTML = crimeFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
-}
-
-// ============================================================
 // ВКЛАДКИ
 // ============================================================
 document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1074,12 +1150,18 @@ renderLeaders();
 updateLastUpdateText();
 
 if (leaderData) {
-  initFactionSelector();
+  renderFactionToggles();
+  renderMyFactionsChips();
+  updateCounter();
+  initReportSelects();
   updateLeaderName('gov');
   updateLeaderName('crime');
+} else {
+  // если данных нет, показываем пустые сетки
+  document.getElementById('factionToggleGrid').innerHTML = '<div class="empty-state">Загрузите данные, чтобы увидеть фракции</div>';
+  document.getElementById('myFactionsChips').innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
 }
 
-renderMyFactionsChips();
 renderReports('gov');
 renderReports('crime');
 fetchLeaders(false);

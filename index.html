@@ -22,7 +22,7 @@
     --red: #ff5c6c;
     --grey: #5a6180;
     --radius: 14px;
-    --transition: 0.25s ease;
+    --transition: 0.2s ease;
   }
   *{ box-sizing: border-box; }
   html,body{
@@ -88,7 +88,7 @@
     margin:0;
     font-size: 22px;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing:-0.01em;
   }
   .status-row{
     display:flex;
@@ -152,7 +152,7 @@
     position:relative;
   }
   .dropdown-tab .dropdown-content{
-    display:none;
+    display:block;
     position:absolute;
     top:calc(100% + 6px);
     left:0;
@@ -164,16 +164,16 @@
     box-shadow:0 8px 30px rgba(0,0,0,0.6);
     z-index:10;
     opacity:0;
-    transform:translateY(-6px);
+    transform:translateY(-6px) scale(0.98);
     transition:opacity var(--transition), transform var(--transition);
     pointer-events:none;
+    visibility:hidden;
   }
-  .dropdown-tab:hover .dropdown-content,
-  .dropdown-tab:focus-within .dropdown-content{
-    display:block;
+  .dropdown-tab:hover .dropdown-content{
     opacity:1;
-    transform:translateY(0);
+    transform:translateY(0) scale(1);
     pointer-events:auto;
+    visibility:visible;
   }
   .dropdown-tab .dropdown-content .tab-btn{
     display:block;
@@ -184,16 +184,20 @@
   .dropdown-tab .dropdown-content .tab-btn:hover{
     background:var(--card-hover);
   }
+  .dropdown-tab .dropdown-content .tab-btn.active{
+    background:var(--gradient);
+    color:#fff;
+  }
 
   .panel{
     display:none;
-    animation: fadeSlide 0.3s ease;
+    animation: fadeSlide 0.25s ease;
   }
   .panel.active{
     display:block;
   }
   @keyframes fadeSlide{
-    from{ opacity:0; transform:translateY(6px); }
+    from{ opacity:0; transform:translateY(4px); }
     to{ opacity:1; transform:translateY(0); }
   }
 
@@ -263,7 +267,6 @@
     position:relative;
     overflow:hidden;
     transition: background var(--transition), border-color var(--transition);
-    animation: fadeSlide 0.3s ease;
   }
   .leader-card:hover{
     background: var(--card-hover);
@@ -354,7 +357,6 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 18px;
-    animation: fadeSlide 0.25s ease;
   }
   .form-card h3, .list-card h3{
     margin: 0 0 14px;
@@ -399,7 +401,6 @@
     border-radius: 10px;
     padding: 12px 14px;
     margin-bottom: 10px;
-    transition: background var(--transition);
   }
   .report-item:hover{
     background: rgba(255,255,255,0.06);
@@ -448,7 +449,7 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  /* ===== НАСТРОЙКИ (обновлённые) ===== */
+  /* ===== НАСТРОЙКИ (исправленные) ===== */
   .settings-panel{
     background: var(--card);
     border: 1px solid var(--border);
@@ -456,7 +457,7 @@
     padding: 18px 20px;
   }
   .settings-panel h3{
-    margin: 0 0 6px 0;
+    margin: 0 0 4px 0;
     font-weight: 700;
     font-size: 16px;
   }
@@ -478,16 +479,16 @@
   }
   .faction-toggle-grid{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 8px;
   }
   .faction-toggle-item{
     background: var(--card-hover);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 8px 6px;
+    padding: 6px 4px;
     text-align: center;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition);
@@ -497,7 +498,15 @@
     align-items:center;
     justify-content:center;
     gap:6px;
-    height:38px;
+    height:36px;
+    min-width:0;
+    overflow:hidden;
+    white-space:nowrap;
+  }
+  .faction-toggle-item .label-text{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
   }
   .faction-toggle-item:hover{
     background: rgba(255,255,255,0.08);
@@ -530,13 +539,20 @@
   }
   .settings-actions{
     display:flex;
-    gap:10px;
+    align-items:center;
+    gap:12px;
     flex-wrap:wrap;
     margin: 12px 0 16px;
   }
   .settings-actions .btn{
     padding: 6px 14px;
     font-size: 12px;
+  }
+  .settings-actions .counter{
+    margin-left:auto;
+    color: var(--text-faint);
+    font-size: 13px;
+    white-space:nowrap;
   }
   .selected-chips{
     display:flex;
@@ -575,15 +591,11 @@
     font-size: 13px;
   }
 
-  /* скрываем подвкладки внутри отчётов — теперь переключение через меню */
   .report-panel{
     display:none;
   }
   .report-panel.active{
     display:block;
-  }
-  .report-sub-tabs{
-    display:none;
   }
 </style>
 </head>
@@ -631,7 +643,6 @@
 
   <!-- ========= ОТЧЁТЫ ========= -->
   <section class="panel" id="panel-reports">
-    <!-- Панель государственных отчётов -->
     <div class="report-panel active" id="reportPanelGov">
       <div class="report-layout">
         <div class="form-card">
@@ -658,8 +669,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Панель криминальных отчётов -->
     <div class="report-panel" id="reportPanelCrime">
       <div class="report-layout">
         <div class="form-card">
@@ -688,16 +697,16 @@
     </div>
   </section>
 
-  <!-- ========= НАСТРОЙКИ (с группировкой) ========= -->
+  <!-- ========= НАСТРОЙКИ (исправленные) ========= -->
   <section class="panel" id="panel-settings">
     <div class="settings-panel">
       <h3>Курируемые фракции</h3>
-      <span class="sub">Выберите фракции, с которыми работаете. Остальные будут скрыты из общего списка и отчётов.</span>
+      <span class="sub">Выберите фракции, с которыми работаете. Остальные будут скрыты.</span>
       <div id="settingsCategories"></div>
       <div class="settings-actions">
         <button class="btn" onclick="selectAllFactions()">Выбрать всё</button>
         <button class="btn" onclick="deselectAllFactions()">Сбросить всё</button>
-        <span style="margin-left:auto; color:var(--text-faint); font-size:12px;" id="selectedCounter">Выбрано: 0</span>
+        <span class="counter" id="selectedCounter">Выбрано: 0</span>
       </div>
       <div>
         <label style="font-size:12px; color:var(--text-dim);">Ваш список:</label>
@@ -782,7 +791,7 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// ===== РАБОТА С КУРИРУЕМЫМИ ФРАКЦИЯМИ =====
+// ===== КУРИРУЕМЫЕ ФРАКЦИИ =====
 function getMyFactions(){
   try{
     const raw = localStorage.getItem('myFactions');
@@ -831,7 +840,6 @@ function renderFactionToggles(){
     return;
   }
   const my = getMyFactions();
-  // группируем по категориям
   const groups = {};
   Object.keys(leaderData).forEach(key => {
     const cat = leaderData[key].category || 'other';
@@ -848,7 +856,7 @@ function renderFactionToggles(){
     items.forEach(key => {
       const active = my.includes(key) ? 'active' : '';
       html += `<div class="faction-toggle-item ${active}" onclick="toggleFaction('${key}')">
-        <span class="indicator"></span>${key}
+        <span class="indicator"></span><span class="label-text">${key}</span>
       </div>`;
     });
     html += `</div></div>`;
@@ -1160,11 +1168,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const tab = this.dataset.tab;
     if (tab === 'reports') return;
     if (tab === 'gov' || tab === 'crime') {
-      // переключение подвкладок в отчётах
       const panel = tab === 'gov' ? 'Gov' : 'Crime';
       document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('reportPanel' + panel).classList.add('active');
-      // подсвечиваем кнопки в выпадающем меню
       document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       return;
@@ -1176,22 +1182,22 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// обработка кликов по пунктам в выпадающем меню
+// обработка кликов по пунктам меню
 document.querySelectorAll('.report-sub-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
     e.stopPropagation();
     const report = this.dataset.report;
-    // активируем панель
     document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
     document.getElementById('reportPanel' + (report === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
-    // активируем кнопку в меню
     document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
-    // делаем вкладку "Отчёты" активной
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-tab="reports"]').classList.add('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('panel-reports').classList.add('active');
+    // закрываем меню (скрываем) — поскольку оно раскрывается по hover, оно закроется само при уходе мыши
+    // но можно принудительно убрать hover, просто сбросив фокус
+    this.blur();
   });
 });
 

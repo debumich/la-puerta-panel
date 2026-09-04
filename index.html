@@ -79,7 +79,7 @@
     background: var(--card);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
-    padding: 12px 20px;
+    padding: 8px 20px;
     margin-bottom: 24px;
     display: flex;
     align-items: center;
@@ -95,26 +95,53 @@
   .header-left{
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .header-left .logo-link{
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity var(--transition);
+  }
+  .header-left .logo-link:hover{
+    opacity: 0.8;
   }
   .header-logo{
     height: 40px;
     width: auto;
     border-radius: 6px;
   }
-  .header-title{
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+  .header-tabs{
+    display: flex;
+    gap: 4px;
+    background: var(--card);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .header-tabs .tab-btn{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor:pointer;
+    transition: color var(--transition), background var(--transition);
+  }
+  .header-tabs .tab-btn:hover{ color: var(--text); }
+  .header-tabs .tab-btn.active{
     background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #fff;
   }
   .header-right{
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 18px;
     font-size: 13px;
     color: var(--text-dim);
   }
@@ -138,69 +165,9 @@
     font-size: 12px;
     white-space: nowrap;
   }
-
-  .tabs{
-    display:flex;
-    gap:6px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 5px;
-    border-radius: 12px;
-    width: fit-content;
-    margin-bottom: 22px;
-    position:relative;
-    z-index:2;
-  }
-  .tab-btn{
-    appearance:none;
-    border:none;
-    background:transparent;
-    color: var(--text-dim);
-    padding: 9px 16px;
-    border-radius: 8px;
-    font-size: 13.5px;
-    font-weight: 600;
-    cursor:pointer;
-    transition: color var(--transition), background var(--transition);
-    position:relative;
-  }
-  .tab-btn:hover{ color: var(--text); }
-  .tab-btn.active{
-    background: var(--gradient);
-    color: #fff;
-  }
-
-  .dropdown-tab{
-    position:relative;
-  }
-  .dropdown-tab .dropdown-content{
-    display:none;
-    position:absolute;
-    top:calc(100% + 6px);
-    left:0;
-    background: var(--bg-elevated);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:6px;
-    min-width:180px;
-    box-shadow:0 8px 30px rgba(0,0,0,0.6);
-    z-index:10;
-  }
-  .dropdown-tab.open .dropdown-content{
-    display:block;
-  }
-  .dropdown-tab .dropdown-content .tab-btn{
-    display:block;
-    width:100%;
-    text-align:left;
-    border-radius:6px;
-  }
-  .dropdown-tab .dropdown-content .tab-btn:hover{
-    background:var(--card-hover);
-  }
-  .dropdown-tab .dropdown-content .tab-btn.active{
-    background:var(--gradient);
-    color:#fff;
+  @keyframes pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.35; }
   }
 
   .panel{
@@ -613,6 +580,40 @@
   .report-panel.active{
     display:block;
   }
+
+  .dropdown-tab{
+    position:relative;
+    display:inline-block;
+  }
+  .dropdown-tab .dropdown-content{
+    display:none;
+    position:absolute;
+    top:calc(100% + 6px);
+    left:0;
+    background: var(--bg-elevated);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:6px;
+    min-width:180px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.6);
+    z-index:10;
+  }
+  .dropdown-tab.open .dropdown-content{
+    display:block;
+  }
+  .dropdown-tab .dropdown-content .tab-btn{
+    display:block;
+    width:100%;
+    text-align:left;
+    border-radius:6px;
+  }
+  .dropdown-tab .dropdown-content .tab-btn:hover{
+    background:var(--card-hover);
+  }
+  .dropdown-tab .dropdown-content .tab-btn.active{
+    background:var(--gradient);
+    color:#fff;
+  }
 </style>
 </head>
 <body>
@@ -624,8 +625,20 @@
 
   <header class="header">
     <div class="header-left">
-      <img src="Header.png" alt="La Puerta" class="header-logo">
-      <span class="header-title">Кураторская панель</span>
+      <a class="logo-link" onclick="goHome()" title="Главная">
+        <img src="Header.png" alt="La Puerta" class="header-logo">
+      </a>
+      <div class="header-tabs" id="headerTabs">
+        <button class="tab-btn active" data-tab="leaders">Лидеры</button>
+        <div class="dropdown-tab" id="reportsDropdown">
+          <button class="tab-btn" data-tab="reports" id="reportsToggle">Отчёты ▾</button>
+          <div class="dropdown-content">
+            <button class="tab-btn report-sub-btn" data-report="gov">Государственные</button>
+            <button class="tab-btn report-sub-btn" data-report="crime">Криминальные</button>
+          </div>
+        </div>
+        <button class="tab-btn" data-tab="settings">Настройки</button>
+      </div>
     </div>
     <div class="header-right">
       <div class="header-status">
@@ -635,18 +648,6 @@
       <span class="header-time" id="headerTime">—</span>
     </div>
   </header>
-
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="leaders">Лидеры</button>
-    <div class="dropdown-tab" id="reportsDropdown">
-      <button class="tab-btn" data-tab="reports" id="reportsToggle">Отчёты ▾</button>
-      <div class="dropdown-content">
-        <button class="tab-btn report-sub-btn" data-report="gov">Государственные</button>
-        <button class="tab-btn report-sub-btn" data-report="crime">Криминальные</button>
-      </div>
-    </div>
-    <button class="tab-btn" data-tab="settings">Настройки</button>
-  </div>
 
   <!-- ========= ЛИДЕРЫ ========= -->
   <section class="panel active" id="panel-leaders">
@@ -1229,23 +1230,38 @@ function renderReports(type){
   `).join('');
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
+function switchTab(tabId){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tabId).classList.add('active');
+  document.querySelectorAll('.header-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.header-tabs .tab-btn[data-tab="'+tabId+'"]').classList.add('active');
+  if(tabId !== 'reports'){
+    document.getElementById('reportsDropdown').classList.remove('open');
+  }
+}
+
+function goHome(){
+  switchTab('leaders');
+}
+
+document.querySelectorAll('.header-tabs .tab-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
     const tab = this.dataset.tab;
-    if (tab === 'reports') return;
-    if (tab === 'gov' || tab === 'crime') {
+    if(tab === 'reports') return;
+    if(tab === 'gov' || tab === 'crime'){
       const panel = tab === 'gov' ? 'Gov' : 'Crime';
       document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
       document.getElementById('reportPanel' + panel).classList.add('active');
       document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       document.getElementById('reportsDropdown').classList.remove('open');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-reports').classList.add('active');
+      document.querySelectorAll('.header-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.header-tabs .tab-btn[data-tab="reports"]').classList.add('active');
       return;
     }
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-' + tab).classList.add('active');
+    switchTab(tab);
   });
 });
 
@@ -1270,10 +1286,10 @@ document.querySelectorAll('.report-sub-btn').forEach(btn => {
     document.getElementById('reportPanel' + (report === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
     document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('[data-tab="reports"]').classList.add('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('panel-reports').classList.add('active');
+    document.querySelectorAll('.header-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.header-tabs .tab-btn[data-tab="reports"]').classList.add('active');
     document.getElementById('reportsDropdown').classList.remove('open');
   });
 });

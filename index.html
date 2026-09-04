@@ -45,7 +45,6 @@
     z-index:-1;
     pointer-events:none;
   }
-  /* декоративные линии */
   body::after{
     content:'';
     position:fixed;
@@ -62,7 +61,6 @@
     padding: 28px 20px 80px;
     position:relative;
   }
-  /* светящиеся точки */
   .glow-dot{
     position:fixed;
     border-radius:50%;
@@ -149,10 +147,7 @@
     color: #fff;
   }
 
-  /* выпадающее меню для "Отчёты" */
-  .dropdown-tab{
-    position:relative;
-  }
+  .dropdown-tab{ position:relative; }
   .dropdown-tab .dropdown-content{
     display:none;
     position:absolute;
@@ -167,18 +162,14 @@
     z-index:10;
   }
   .dropdown-tab:hover .dropdown-content,
-  .dropdown-tab:focus-within .dropdown-content{
-    display:block;
-  }
+  .dropdown-tab:focus-within .dropdown-content{ display:block; }
   .dropdown-tab .dropdown-content .tab-btn{
     display:block;
     width:100%;
     text-align:left;
     border-radius:6px;
   }
-  .dropdown-tab .dropdown-content .tab-btn:hover{
-    background:var(--card-hover);
-  }
+  .dropdown-tab .dropdown-content .tab-btn:hover{ background:var(--card-hover); }
 
   .panel{ display:none; }
   .panel.active{ display:block; }
@@ -369,10 +360,7 @@
     background: rgba(255,255,255,0.06);
   }
   .field select option{ background: #0d1226; }
-  /* увеличенный select в настройках */
-  .settings-panel select[multiple]{
-    height:200px;
-  }
+  .settings-panel select[multiple]{ height:200px; }
   .filter-row{
     display:flex;
     gap:8px;
@@ -475,13 +463,11 @@
     font-weight:700;
   }
 
-  /* скрываем подменю по умолчанию */
   .report-sub-tabs{ display:none; }
   .report-sub-tabs.active{ display:flex; gap:6px; margin-bottom:16px; }
   .report-sub-tabs .tab-btn{ background:var(--card); border:1px solid var(--border); border-radius:8px; padding:6px 14px; font-size:12px; }
   .report-sub-tabs .tab-btn.active{ background:var(--gradient); color:#fff; border:none; }
 
-  /* для вкладки отчётов – две подвкладки внутри */
   .report-panel{ display:none; }
   .report-panel.active{ display:block; }
 </style>
@@ -535,7 +521,6 @@
       <button class="tab-btn" data-report="crime">Криминальные</button>
     </div>
 
-    <!-- ГОСУДАРСТВЕННЫЕ -->
     <div class="report-panel active" id="reportPanelGov">
       <div class="report-layout">
         <div class="form-card">
@@ -543,16 +528,7 @@
           <div class="field">
             <label>Фракция</label>
             <select id="reportGovFaction" onchange="updateLeaderName('gov')">
-              <option value="GOV">GOV</option>
-              <option value="Генеральный прокурор">Генеральный прокурор</option>
-              <option value="Председатель Верховного суда">Председатель Верховного суда</option>
-              <option value="FIB">FIB</option>
-              <option value="LSPD">LSPD</option>
-              <option value="LSSD">LSSD</option>
-              <option value="NG">NG</option>
-              <option value="SASPA">SASPA</option>
-              <option value="EMS">EMS</option>
-              <option value="WN">WN</option>
+              <!-- заполняется динамически -->
             </select>
           </div>
           <div class="field"><label>Имя лидера</label><input type="text" id="reportGovName" placeholder="Подставится автоматически"></div>
@@ -574,7 +550,6 @@
       </div>
     </div>
 
-    <!-- КРИМИНАЛЬНЫЕ -->
     <div class="report-panel" id="reportPanelCrime">
       <div class="report-layout">
         <div class="form-card">
@@ -582,12 +557,7 @@
           <div class="field">
             <label>Фракция</label>
             <select id="reportCrimeFaction" onchange="updateLeaderName('crime')">
-              <option value="MG-13">MG-13</option>
-              <option value="Ballas">Ballas</option>
-              <option value="Families">Families</option>
-              <option value="AM">AM</option>
-              <option value="RM">RM</option>
-              <option value="MM">MM</option>
+              <!-- заполняется динамически -->
             </select>
           </div>
           <div class="field"><label>Имя лидера</label><input type="text" id="reportCrimeName" placeholder="Подставится автоматически"></div>
@@ -618,7 +588,7 @@
       <div class="field">
         <label>Фракции (зажмите Ctrl для множественного выбора):</label>
         <select id="factionSelector" multiple>
-          <!-- заполняется скриптом -->
+          <!-- заполняется динамически -->
         </select>
         <div>
           <button class="btn" onclick="addSelectedFactions()">➕ Добавить выбранные</button>
@@ -642,34 +612,14 @@
 // ============================================================
 const API_URL = 'https://la-puerta-proxy.vercel.app/';
 
-// ВСЕ фракции (без групп в подписях)
-const ALL_FACTIONS = [
-  { key: 'GOV', label: 'GOV' },
-  { key: 'Генеральный прокурор', label: 'Генеральный прокурор' },
-  { key: 'Председатель Верховного суда', label: 'Председатель Верховного суда' },
-  { key: 'FIB', label: 'FIB' },
-  { key: 'LSPD', label: 'LSPD' },
-  { key: 'LSSD', label: 'LSSD' },
-  { key: 'NG', label: 'NG' },
-  { key: 'SASPA', label: 'SASPA' },
-  { key: 'EMS', label: 'EMS' },
-  { key: 'WN', label: 'WN' },
-  { key: 'MG-13', label: 'MG-13' },
-  { key: 'Ballas', label: 'Ballas' },
-  { key: 'Families', label: 'Families' },
-  { key: 'AM', label: 'AM' },
-  { key: 'RM', label: 'RM' },
-  { key: 'MM', label: 'MM' }
-];
-
-// Группировка для отображения (захардкожена для порядка)
-const FACTION_GROUPS = [
-  { name: 'Исполнительная власть', keys: ['GOV'] },
-  { name: 'Судебная власть', keys: ['Генеральный прокурор', 'Председатель Верховного суда'] },
-  { name: 'Силовые структуры', keys: ['FIB', 'LSPD', 'LSSD', 'NG', 'SASPA', 'EMS', 'WN'] },
-  { name: 'Уличные группировки', keys: ['MG-13', 'Ballas', 'Families'] },
-  { name: 'Преступные синдикаты', keys: ['AM', 'RM', 'MM'] }
-];
+const CATEGORY_NAMES = {
+  'judicial': 'Судебная власть',
+  'gov': 'Исполнительная власть и силовые структуры',
+  'street': 'Уличные группировки',
+  'syndicate': 'Преступные синдикаты',
+  'other': 'Другие'
+};
+const CATEGORY_ORDER = ['gov', 'judicial', 'street', 'syndicate', 'other'];
 
 // ============================================================
 // УТИЛИТЫ
@@ -702,7 +652,6 @@ function parseDate(str){
 function daysLeftInfo(appointedDateStr, termDays, termText){
   const d = parseDate(appointedDateStr);
   if (!d) return { status: 'unknown', badgeClass: 'badge-grey', text: 'Дата уточняется' };
-
   let termNumber = 1;
   if (termText) {
     const match = termText.match(/(\d+)-й\s*срок/);
@@ -712,11 +661,7 @@ function daysLeftInfo(appointedDateStr, termDays, termText){
   const deadline = new Date(d.getTime() + totalDays * 86400000);
   const now = new Date();
   const diffDays = Math.ceil((deadline - now) / 86400000);
-
-  if (diffDays < 0) {
-    const daysOverdue = Math.abs(diffDays);
-    return { status: 'expired', badgeClass: 'badge-red', text: `Истёк ${daysOverdue} дн. назад` };
-  }
+  if (diffDays < 0) return { status: 'expired', badgeClass: 'badge-red', text: `Истёк ${Math.abs(diffDays)} дн. назад` };
   if (diffDays <= 3) return { status: 'red', badgeClass: 'badge-red', text: `${diffDays} дн. осталось` };
   if (diffDays <= 10) return { status: 'yellow', badgeClass: 'badge-yellow', text: `${diffDays} дн. осталось` };
   return { status: 'green', badgeClass: 'badge-green', text: `${diffDays} дн. осталось` };
@@ -738,7 +683,7 @@ function escapeHtml(str){
 }
 
 // ============================================================
-// НАСТРОЙКИ ПОЛЬЗОВАТЕЛЯ (курируемые фракции)
+// НАСТРОЙКИ ПОЛЬЗОВАТЕЛЯ
 // ============================================================
 function getMyFactions(){
   try{
@@ -776,9 +721,10 @@ function renderMyFactionsChips(){
     container.innerHTML = '<span style="color:var(--text-dim); font-size:13px;">Вы не выбрали ни одной фракции. Отображаются все.</span>';
     return;
   }
-  container.innerHTML = list.map(f => `
-    <span class="chip">${ALL_FACTIONS.find(a => a.key === f)?.label || f} <span class="remove" onclick="removeMyFaction('${f}')">✕</span></span>
-  `).join('');
+  container.innerHTML = list.map(f => {
+    const label = leaderData && leaderData[f] ? f : f;
+    return `<span class="chip">${label} <span class="remove" onclick="removeMyFaction('${f}')">✕</span></span>`;
+  }).join('');
 }
 
 function removeMyFaction(f){
@@ -787,13 +733,8 @@ function removeMyFaction(f){
   toast('Фракция удалена');
 }
 
-function initFactionSelector(){
-  const sel = document.getElementById('factionSelector');
-  sel.innerHTML = ALL_FACTIONS.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
-}
-
 // ============================================================
-// ЗАГРУЗКА ДАННЫХ ЛИДЕРОВ
+// ЗАГРУЗКА ДАННЫХ
 // ============================================================
 let leaderData = null;
 
@@ -823,6 +764,10 @@ async function fetchLeaders(force){
       setStatus(data.stale ? 'offline' : 'online', data.stale ? 'Устаревшие данные' : 'Онлайн');
       if (data.stale) toast('Не удалось получить свежие данные, показан последний кэш');
       else if (force) toast('Данные обновлены');
+      // обновляем динамические списки
+      initFactionSelector();
+      updateLeaderName('gov');
+      updateLeaderName('crime');
     } else throw new Error('Пустой ответ API');
   }catch(err){
     console.error(err);
@@ -845,7 +790,7 @@ function updateLastUpdateText(){
 }
 
 // ============================================================
-// ОТРИСОВКА ЛИДЕРОВ
+// ОТРИСОВКА ЛИДЕРОВ (динамическая группировка)
 // ============================================================
 function renderLeaders(){
   const root = document.getElementById('leadersRoot');
@@ -857,29 +802,39 @@ function renderLeaders(){
   }
 
   const myFactions = getMyFactions();
+  const groups = {};
+  Object.keys(leaderData).forEach(key => {
+    const entry = leaderData[key];
+    const category = entry.category || 'other';
+    if (myFactions.length && !myFactions.includes(key)) return;
+    if (!groups[category]) groups[category] = [];
+    groups[category].push({ key, entry });
+  });
+
+  const sortedCategories = Object.keys(groups).sort((a, b) => {
+    const idxA = CATEGORY_ORDER.indexOf(a);
+    const idxB = CATEGORY_ORDER.indexOf(b);
+    if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+
   let total = 0;
-
-  FACTION_GROUPS.forEach(group => {
-    // фильтруем ключи по курируемым
-    let keys = group.keys;
-    if (myFactions.length) {
-      keys = keys.filter(k => myFactions.includes(k));
-    }
-    if (keys.length === 0) return;
-
+  sortedCategories.forEach(cat => {
+    const factionList = groups[cat];
+    if (factionList.length === 0) return;
     const groupEl = document.createElement('div');
     groupEl.className = 'group';
     const titleEl = document.createElement('div');
     titleEl.className = 'group-title';
-    titleEl.textContent = group.name;
+    titleEl.textContent = CATEGORY_NAMES[cat] || cat;
     groupEl.appendChild(titleEl);
 
     const grid = document.createElement('div');
     grid.className = 'card-grid';
-    keys.forEach(key => {
-      const entry = leaderData[key];
-      const faction = ALL_FACTIONS.find(f => f.key === key);
-      grid.appendChild(renderCard(faction || { key, label: key }, entry));
+    factionList.forEach(({ key, entry }) => {
+      grid.appendChild(renderCard({ key, label: key, category: cat }, entry));
       total++;
     });
     groupEl.appendChild(grid);
@@ -916,7 +871,7 @@ function renderCard(faction, entry){
   metaItems.push(`<div class="lc-meta-item"><div class="label">Назначен</div><div class="value">${entry.appointedDate || '—'}</div></div>`);
   metaItems.push(`<div class="lc-meta-item"><div class="label">Текущий срок</div><div class="value">${entry.term || '—'}</div></div>`);
 
-  if (faction.key === 'Генеральный прокурор' || faction.key === 'Председатель Верховного суда'){
+  if (entry.category === 'judicial'){
     const wcls = warningsClass(entry.warnings);
     metaItems.push(`<div class="lc-meta-item"><div class="label">Предупреждения</div><div class="value ${wcls}">${entry.warnings ?? '—'}</div></div>`);
   } else {
@@ -998,10 +953,9 @@ function saveReport(type){
   });
   setReports(type, reports);
 
-  // очистка полей (имя оставляем, т.к. оно подставится снова)
-  [prefix+'Problems', prefix+'Improvements', prefix+'Comment'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
+  document.getElementById(prefix + 'Problems').value = '';
+  document.getElementById(prefix + 'Improvements').value = '';
+  document.getElementById(prefix + 'Comment').value = '';
   document.getElementById(prefix + 'Date').value = '';
 
   toast('Отчёт сохранён');
@@ -1029,8 +983,6 @@ function renderReports(type){
   let reports = getReports(type);
   if (start) reports = reports.filter(r => r.date >= start);
   if (end) reports = reports.filter(r => r.date <= end);
-
-  // фильтр по курируемым фракциям
   const myFactions = getMyFactions();
   if (myFactions.length) {
     reports = reports.filter(r => myFactions.includes(r.faction));
@@ -1058,21 +1010,36 @@ function renderReports(type){
 }
 
 // ============================================================
+// ДИНАМИЧЕСКОЕ ЗАПОЛНЕНИЕ СПИСКОВ
+// ============================================================
+function initFactionSelector(){
+  if (!leaderData) return;
+  const factions = Object.keys(leaderData).map(key => ({ key, label: key }));
+  const sel = document.getElementById('factionSelector');
+  sel.innerHTML = factions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
+
+  // также обновляем выпадающие списки в отчётах
+  const govFactions = factions.filter(f => leaderData[f.key].category === 'gov' || leaderData[f.key].category === 'judicial');
+  const crimeFactions = factions.filter(f => leaderData[f.key].category === 'street' || leaderData[f.key].category === 'syndicate' || leaderData[f.key].category === 'other');
+
+  const govSelect = document.getElementById('reportGovFaction');
+  const crimeSelect = document.getElementById('reportCrimeFaction');
+  govSelect.innerHTML = govFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
+  crimeSelect.innerHTML = crimeFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
+}
+
+// ============================================================
 // ВКЛАДКИ
 // ============================================================
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
-    // если клик на вкладке отчётов (не из подменю), то не закрываем меню
     if (this.dataset.tab === 'reports') return;
     const tab = this.dataset.tab;
-    // для подвкладок отчётов
     if (tab === 'reports-gov' || tab === 'reports-crime') {
-      // активируем основную вкладку "Отчёты"
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelector('[data-tab="reports"]').classList.add('active');
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.getElementById('panel-reports').classList.add('active');
-      // переключаем подвкладки
       document.querySelectorAll('.report-sub-tabs .tab-btn').forEach(b => b.classList.remove('active'));
       const reportType = tab === 'reports-gov' ? 'gov' : 'crime';
       document.querySelector(`.report-sub-tabs .tab-btn[data-report="${reportType}"]`).classList.add('active');
@@ -1080,7 +1047,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       document.getElementById('reportPanel' + (reportType === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
       return;
     }
-    // остальные вкладки
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1088,7 +1054,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// переключение подвкладок отчётов
 document.querySelectorAll('.report-sub-tabs .tab-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.report-sub-tabs .tab-btn').forEach(b => b.classList.remove('active'));
@@ -1108,21 +1073,15 @@ loadCachedLeaders();
 renderLeaders();
 updateLastUpdateText();
 
+if (leaderData) {
+  initFactionSelector();
+  updateLeaderName('gov');
+  updateLeaderName('crime');
+}
+
 renderMyFactionsChips();
-initFactionSelector();
-
-// подвязываем обновление имени при загрузке данных
-document.addEventListener('DOMContentLoaded', function() {
-  // если данные уже есть, подставим имена при первом открытии
-  if (leaderData) {
-    updateLeaderName('gov');
-    updateLeaderName('crime');
-  }
-});
-
 renderReports('gov');
 renderReports('crime');
-
 fetchLeaders(false);
 </script>
 </body>

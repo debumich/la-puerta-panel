@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -152,7 +153,6 @@
     position:relative;
   }
   .dropdown-tab .dropdown-content{
-    display:block;
     position:absolute;
     top:calc(100% + 6px);
     left:0;
@@ -165,7 +165,7 @@
     z-index:10;
     opacity:0;
     transform:translateY(-6px) scale(0.98);
-    transition:opacity var(--transition), transform var(--transition);
+    transition:opacity var(--transition), transform var(--transition), visibility 0s linear var(--transition);
     pointer-events:none;
     visibility:hidden;
   }
@@ -174,6 +174,7 @@
     transform:translateY(0) scale(1);
     pointer-events:auto;
     visibility:visible;
+    transition-delay:0s;
   }
   .dropdown-tab .dropdown-content .tab-btn{
     display:block;
@@ -449,7 +450,7 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  /* ===== НАСТРОЙКИ (исправленные) ===== */
+  /* ===== НАСТРОЙКИ ===== */
   .settings-panel{
     background: var(--card);
     border: 1px solid var(--border);
@@ -697,7 +698,7 @@
     </div>
   </section>
 
-  <!-- ========= НАСТРОЙКИ (исправленные) ========= -->
+  <!-- ========= НАСТРОЙКИ (с объединением GOV) ========= -->
   <section class="panel" id="panel-settings">
     <div class="settings-panel">
       <h3>Курируемые фракции</h3>
@@ -722,6 +723,7 @@
 <script>
 const API_URL = 'https://la-puerta-proxy.vercel.app/';
 
+// Группировка для отображения
 const CATEGORY_NAMES = {
   'judicial': 'Судебная власть',
   'gov': 'Государственные',
@@ -731,8 +733,12 @@ const CATEGORY_NAMES = {
 };
 const CATEGORY_ORDER = ['gov', 'judicial', 'street', 'syndicate', 'other'];
 
+// Ключи, которые объединяются под GOV
+const GOV_KEYS = ['GOV', 'Генеральный прокурор', 'Председатель Верховного суда'];
+
 let leaderData = null;
 
+// ===== УТИЛИТЫ =====
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -809,16 +815,36 @@ function setMyFactions(arr){
   updateCounter();
 }
 
-function toggleFaction(factionKey){
+// Переключение отдельной фракции
+function toggleFactionSingle(key){
   const current = getMyFactions();
-  const idx = current.indexOf(factionKey);
+  const idx = current.indexOf(key);
   if (idx > -1) {
     current.splice(idx, 1);
   } else {
-    current.push(factionKey);
+    current.push(key);
   }
   setMyFactions(current);
-  toast(current.includes(factionKey) ? `Фракция "${factionKey}" добавлена` : `Фракция "${factionKey}" удалена`);
+  toast(current.includes(key) ? `Фракция "${key}" добавлена` : `Фракция "${key}" удалена`);
+}
+
+// Переключение GOV (все три ключа)
+function toggleGov(){
+  const current = getMyFactions();
+  // Проверяем, выбраны ли все три ключа
+  const allSelected = GOV_KEYS.every(k => current.includes(k));
+  if (allSelected) {
+    // Убираем все три
+    const newArr = current.filter(k => !GOV_KEYS.includes(k));
+    setMyFactions(newArr);
+    toast('GOV удалён');
+  } else {
+    // Добавляем все три (без дублирования)
+    const set = new Set(current);
+    GOV_KEYS.forEach(k => set.add(k));
+    setMyFactions(Array.from(set));
+    toast('GOV добавлен');
+  }
 }
 
 function selectAllFactions(){
@@ -840,24 +866,42 @@ function renderFactionToggles(){
     return;
   }
   const my = getMyFactions();
+  // Группируем, исключая GOV_KEYS (их заменим отдельным переключателем)
   const groups = {};
   Object.keys(leaderData).forEach(key => {
+    if (GOV_KEYS.includes(key)) return; // пропускаем, добавим отдельно
     const cat = leaderData[key].category || 'other';
     if (!groups[cat]) groups[cat] = [];
     groups[cat].push(key);
   });
+  // Добавляем специальную группу "GOV" в категорию "Государственные" или создаём отдельную
+  // Поместим в категорию gov (первую)
+  const govCat = 'gov';
+  if (!groups[govCat]) groups[govCat] = [];
+  // Вставляем GOV в начало этой категории
+  groups[govCat].unshift('__GOV__'); // маркер, который мы заменим на переключатель GOV
+
   let html = '';
   const sortedCats = Object.keys(groups).sort((a,b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b));
   sortedCats.forEach(cat => {
-    const items = groups[cat].sort();
+    let items = groups[cat];
+    if (items.length === 0) return;
     html += `<div class="settings-category">
       <div class="cat-title">${CATEGORY_NAMES[cat] || cat}</div>
       <div class="faction-toggle-grid">`;
     items.forEach(key => {
-      const active = my.includes(key) ? 'active' : '';
-      html += `<div class="faction-toggle-item ${active}" onclick="toggleFaction('${key}')">
-        <span class="indicator"></span><span class="label-text">${key}</span>
-      </div>`;
+      if (key === '__GOV__') {
+        // Специальный переключатель GOV
+        const active = GOV_KEYS.every(k => my.includes(k));
+        html += `<div class="faction-toggle-item ${active ? 'active' : ''}" onclick="toggleGov()">
+          <span class="indicator"></span><span class="label-text">GOV (губернатор, прокурор, суд)</span>
+        </div>`;
+      } else {
+        const active = my.includes(key) ? 'active' : '';
+        html += `<div class="faction-toggle-item ${active}" onclick="toggleFactionSingle('${key}')">
+          <span class="indicator"></span><span class="label-text">${key}</span>
+        </div>`;
+      }
     });
     html += `</div></div>`;
   });
@@ -871,9 +915,12 @@ function renderMyFactionsChips(){
     container.innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
     return;
   }
-  container.innerHTML = list.map(f => `
-    <span class="chip">${f} <span class="remove" onclick="toggleFaction('${f}')">✕</span></span>
-  `).join('');
+  container.innerHTML = list.map(f => {
+    // Если фракция из GOV_KEYS, показываем как GOV
+    let display = f;
+    if (GOV_KEYS.includes(f)) display = 'GOV ('+f+')';
+    return `<span class="chip">${display} <span class="remove" onclick="toggleFactionSingle('${f}')">✕</span></span>`;
+  }).join('');
 }
 
 function updateCounter(){
@@ -1195,9 +1242,9 @@ document.querySelectorAll('.report-sub-btn').forEach(btn => {
     document.querySelector('[data-tab="reports"]').classList.add('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('panel-reports').classList.add('active');
-    // закрываем меню (скрываем) — поскольку оно раскрывается по hover, оно закроется само при уходе мыши
-    // но можно принудительно убрать hover, просто сбросив фокус
+    // Закрываем меню, снимая hover: убираем фокус с кнопки
     this.blur();
+    // Можно также принудительно спрятать меню, но оно само закроется при уходе мыши
   });
 });
 
@@ -1226,3 +1273,4 @@ fetchLeaders(false);
 </script>
 </body>
 </html>
+```

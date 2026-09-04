@@ -311,6 +311,9 @@
     font-size: 13px;
     font-weight: 600;
   }
+  .value-negative{
+    color: var(--red);
+  }
   .value.warn-ok{ color: var(--green); }
   .value.warn-mid{ color: var(--yellow); }
   .value.warn-bad{ color: var(--red); }
@@ -649,7 +652,6 @@
     </div>
   </header>
 
-  <!-- ========= ЛИДЕРЫ ========= -->
   <section class="panel active" id="panel-leaders">
     <div class="toolbar">
       <div style="color:var(--text-dim); font-size:13px;">
@@ -663,7 +665,6 @@
     <div id="leadersRoot"></div>
   </section>
 
-  <!-- ========= ОТЧЁТЫ ========= -->
   <section class="panel" id="panel-reports">
     <div class="report-panel active" id="reportPanelGov">
       <div class="report-layout">
@@ -719,7 +720,6 @@
     </div>
   </section>
 
-  <!-- ========= НАСТРОЙКИ ========= -->
   <section class="panel" id="panel-settings">
     <div class="settings-panel">
       <h3>Курируемые фракции</h3>
@@ -1090,7 +1090,9 @@ function renderCard(faction, entry){
     const wcls = warningsClass(entry.warnings);
     metaItems.push(`<div class="lc-meta-item"><div class="label">Предупреждения</div><div class="value ${wcls}">${entry.warnings ?? '—'}</div></div>`);
   } else {
-    metaItems.push(`<div class="lc-meta-item"><div class="label">Баллы</div><div class="value">${entry.points ?? '—'}</div></div>`);
+    const points = parseInt(entry.points);
+    const negClass = (points < 0) ? 'value-negative' : '';
+    metaItems.push(`<div class="lc-meta-item"><div class="label">Баллы</div><div class="value ${negClass}">${entry.points ?? '—'}</div></div>`);
   }
 
   card.innerHTML = `

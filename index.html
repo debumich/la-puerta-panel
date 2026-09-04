@@ -809,16 +809,6 @@
   .leader-manager .add-form button{
     padding:8px 16px;
   }
-
-  .hidden-for-leader{
-    display:none;
-  }
-  .visible-for-admin{
-    display:none;
-  }
-  .visible-for-leader{
-    display:none;
-  }
 </style>
 </head>
 <body>
@@ -835,9 +825,12 @@
       </a>
       <div class="header-tabs" id="headerTabs">
         <button class="tab-btn active" data-tab="leaders">Лидеры</button>
-        <!-- Контейнер для динамической вкладки Отчёты -->
-        <div id="reportsTabContainer">
-          <!-- Для администратора будет выпадающее меню, для лидера — простая кнопка -->
+        <div class="dropdown-tab" id="reportsDropdown">
+          <button class="tab-btn" data-tab="reports" id="reportsToggle">Отчёты ▾</button>
+          <div class="dropdown-content">
+            <button class="tab-btn report-sub-btn" data-report="gov">Государственные</button>
+            <button class="tab-btn report-sub-btn" data-report="crime">Криминальные</button>
+          </div>
         </div>
         <button class="tab-btn" data-tab="settings" id="settingsTab" style="display:none;">Настройки</button>
         <button class="tab-btn" data-tab="leaders-manager" id="managerTab" style="display:none;">Управление</button>
@@ -884,12 +877,7 @@
     <div id="leadersRoot"></div>
   </section>
 
-  <!-- Панель отчётов для администратора (две подпанели) -->
-  <section class="panel" id="panel-reports-admin">
-    <div class="report-sub-tabs" id="reportTypeTabs">
-      <button class="tab-btn active" data-report="gov">Государственные</button>
-      <button class="tab-btn" data-report="crime">Криминальные</button>
-    </div>
+  <section class="panel" id="panel-reports">
     <div class="report-panel active" id="reportPanelGov">
       <div class="report-layout">
         <div class="form-card">
@@ -905,7 +893,7 @@
           <div class="field"><label>Дополнительный комментарий</label><textarea id="reportGovComment" rows="2"></textarea></div>
           <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('gov')">Сохранить</button>
         </div>
-        <div class="list-card" id="adminReportListGov">
+        <div class="list-card">
           <h3>Сохранённые отчёты</h3>
           <div class="filter-row">
             <div class="field"><label>С</label><input type="date" id="gov-filter-start" onchange="renderReports('gov')"></div>
@@ -931,7 +919,7 @@
           <div class="field"><label>Дополнительный комментарий</label><textarea id="reportCrimeComment" rows="2"></textarea></div>
           <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('crime')">Сохранить</button>
         </div>
-        <div class="list-card" id="adminReportListCrime">
+        <div class="list-card">
           <h3>Сохранённые отчёты</h3>
           <div class="filter-row">
             <div class="field"><label>С</label><input type="date" id="crime-filter-start" onchange="renderReports('crime')"></div>
@@ -941,26 +929,6 @@
           <div id="crime-list"></div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- Панель отчётов для лидера (только его фракция, без списка) -->
-  <section class="panel" id="panel-leader-report">
-    <div class="report-layout">
-      <div class="form-card">
-        <h3>Мой отчёт</h3>
-        <div class="field">
-          <label>Фракция</label>
-          <select id="leaderReportFaction" disabled></select>
-        </div>
-        <div class="field"><label>Имя лидера</label><input type="text" id="leaderReportName" placeholder="Подставится автоматически"></div>
-        <div class="field"><label>Дата отчёта</label><input type="date" id="leaderReportDate"></div>
-        <div class="field"><label>Основные проблемы</label><textarea id="leaderReportProblems" rows="3"></textarea></div>
-        <div class="field"><label>Улучшения и достижения</label><textarea id="leaderReportImprovements" rows="3"></textarea></div>
-        <div class="field"><label>Дополнительный комментарий</label><textarea id="leaderReportComment" rows="2"></textarea></div>
-        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveLeaderReport()">Сохранить</button>
-      </div>
-      <!-- У лидера нет списка отчётов -->
     </div>
   </section>
 
@@ -1102,7 +1070,7 @@ function escapeHtml(str){
 }
 
 // =======================================================================
-// 4. АВТОРИЗАЦИЯ (Firebase)
+// 4. АВТОРИЗАЦИЯ (Firebase) — БЕЗ ВЫБОРА РОЛИ
 // =======================================================================
 function initAuth(){
   auth.onAuthStateChanged(user => {
@@ -1126,7 +1094,6 @@ async function handleUser(user){
     localStorage.setItem('user', JSON.stringify(currentUser));
     document.getElementById('authModal').classList.remove('open');
     updateUIForUser();
-    // Подгружаем отчёты для админа
     renderReports('gov');
     renderReports('crime');
     toast(`Добро пожаловать, администратор ${email}`);
@@ -1142,8 +1109,8 @@ async function handleUser(user){
         localStorage.setItem('user', JSON.stringify(currentUser));
         document.getElementById('authModal').classList.remove('open');
         updateUIForUser();
-        // Для лидера загружаем только его отчёты (функция renderLeaderReports)
-        renderLeaderReports();
+        renderReports('gov');
+        renderReports('crime');
         toast(`Добро пожаловать, лидер ${data.faction}`);
         return;
       }
@@ -1179,6 +1146,8 @@ function logout(){
     currentUser = null;
     localStorage.removeItem('user');
     updateUIForUser();
+    renderReports('gov');
+    renderReports('crime');
     toast('Вы вышли');
     showAuthModal();
   });
@@ -1190,7 +1159,6 @@ function updateUIForUser(){
   const logoutBtn = document.getElementById('logoutBtn');
   const settingsTab = document.getElementById('settingsTab');
   const managerTab = document.getElementById('managerTab');
-  const reportsContainer = document.getElementById('reportsTabContainer');
 
   if(!currentUser){
     roleDisplay.textContent = 'Гость';
@@ -1198,95 +1166,19 @@ function updateUIForUser(){
     logoutBtn.textContent = 'Войти';
     settingsTab.style.display = 'none';
     managerTab.style.display = 'none';
-    // Показываем дефолтную вкладку "Лидеры"
     return;
   }
-
   const display = currentUser.role === 'admin' ? 'Администратор' : `Лидер (${currentUser.faction})`;
   roleDisplay.textContent = display;
   emailDisplay.textContent = currentUser.email;
   logoutBtn.textContent = 'Выйти';
-
-  // Настройка видимости вкладок
   if(currentUser.role === 'admin'){
     settingsTab.style.display = 'inline-block';
     managerTab.style.display = 'inline-block';
-    // Для администратора — выпадающее меню Отчёты
-    reportsContainer.innerHTML = `
-      <div class="dropdown-tab" id="reportsDropdown">
-        <button class="tab-btn" data-tab="reports-admin" id="reportsToggle">Отчёты ▾</button>
-        <div class="dropdown-content">
-          <button class="tab-btn report-sub-btn" data-report="gov">Государственные</button>
-          <button class="tab-btn report-sub-btn" data-report="crime">Криминальные</button>
-        </div>
-      </div>
-    `;
-    // Делаем активной вкладку "Отчёты" (если нужно)
-    // Переключаем панель на админскую, если она была активна
-    const panelReportsAdmin = document.getElementById('panel-reports-admin');
-    const panelLeaderReport = document.getElementById('panel-leader-report');
-    panelReportsAdmin.classList.add('active');
-    panelLeaderReport.classList.remove('active');
-    // Подгружаем отчёты
-    renderReports('gov');
-    renderReports('crime');
-    // Навешиваем обработчики на новые кнопки
-    attachReportHandlers();
   } else {
-    // Лидер
     settingsTab.style.display = 'none';
     managerTab.style.display = 'none';
-    // Простая кнопка "Отчёты" (без выпадающего списка)
-    reportsContainer.innerHTML = `
-      <button class="tab-btn" data-tab="leader-report">Отчёты</button>
-    `;
-    // Активируем панель для лидера, если она не активна
-    const panelReportsAdmin = document.getElementById('panel-reports-admin');
-    const panelLeaderReport = document.getElementById('panel-leader-report');
-    panelReportsAdmin.classList.remove('active');
-    panelLeaderReport.classList.add('active');
-    // Заполняем форму для лидера
-    initLeaderReportForm();
-    renderLeaderReports();
   }
-
-  // Переключаем вкладки, если текущая панель не соответствует роли
-  // (Пользователь может быть на вкладке, которая для него недоступна)
-  // Проверим активную панель и при необходимости переключим на "Лидеры"
-  const activePanel = document.querySelector('.panel.active');
-  if(activePanel){
-    const panelId = activePanel.id;
-    if(currentUser.role === 'leader' && (panelId === 'panel-settings' || panelId === 'panel-leaders-manager' || panelId === 'panel-reports-admin')){
-      switchTab('leaders');
-    } else if(currentUser.role === 'admin' && panelId === 'panel-leader-report'){
-      switchTab('leaders');
-    }
-  }
-}
-
-function attachReportHandlers(){
-  // Обработчики для выпадающего меню отчётов (админ)
-  document.querySelectorAll('.report-sub-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const report = this.dataset.report;
-      document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
-      document.getElementById('reportPanel' + (report === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
-      document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
-      document.getElementById('reportsDropdown').classList.remove('open');
-    });
-  });
-
-  document.getElementById('reportsToggle')?.addEventListener('click', function(e) {
-    e.stopPropagation();
-    document.getElementById('reportsDropdown').classList.toggle('open');
-  });
-
-  document.addEventListener('click', function(e) {
-    const dropdown = document.getElementById('reportsDropdown');
-    if(dropdown && !dropdown.contains(e.target)) dropdown.classList.remove('open');
-  });
 }
 
 // =======================================================================
@@ -1356,16 +1248,14 @@ function fillManagerFactionSelect(){
 }
 
 // =======================================================================
-// 6. ОТЧЁТЫ ДЛЯ АДМИНИСТРАТОРА (Firestore)
+// 6. ОТЧЁТЫ (Firestore) — общие для всех пользователей
 // =======================================================================
-async function loadReportsFromFirestore(){
-  if(!currentUser) return [];
+async function loadReports(){
+  if(!currentUser) return;
   try {
     let query = db.collection('reports').orderBy('timestamp', 'desc');
-    if(currentUser.role === 'admin'){
-      // Админ видит все
-    } else {
-      // Лидер видит только свои (но для этой функции мы не используем)
+    if(currentUser.role === 'leader'){
+      query = query.where('faction', '==', currentUser.faction);
     }
     const snapshot = await query.get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1376,15 +1266,18 @@ async function loadReportsFromFirestore(){
 }
 
 async function renderReports(type){
-  if(!currentUser || currentUser.role !== 'admin') return;
   const list = document.getElementById(`${type}-list`);
   const start = document.getElementById(`${type}-filter-start`).value;
   const end = document.getElementById(`${type}-filter-end`).value;
-  const allReports = await loadReportsFromFirestore();
+  const allReports = await loadReports();
   let reports = allReports;
   if(start) reports = reports.filter(r => r.date >= start);
   if(end) reports = reports.filter(r => r.date <= end);
-  // Фильтрация по категории (gov/crime)
+  if(currentUser && currentUser.role === 'admin'){
+    const myFactions = getMyFactions();
+    if(myFactions.length) reports = reports.filter(r => myFactions.includes(r.faction));
+  }
+  // дополнительная фильтрация по типу (gov/crime) — по категории фракции
   const categoryMap = {
     'gov': ['gov', 'judicial'],
     'crime': ['street', 'syndicate', 'other']
@@ -1394,9 +1287,6 @@ async function renderReports(type){
     const entry = leaderData?.[r.faction];
     return entry && allowedCategories.includes(entry.category);
   });
-  // Дополнительная фильтрация по курируемым фракциям админа
-  const myFactions = getMyFactions();
-  if(myFactions.length) reports = reports.filter(r => myFactions.includes(r.faction));
 
   if(reports.length === 0){
     list.innerHTML = '<div class="empty-state">Отчётов пока нет</div>';
@@ -1409,7 +1299,7 @@ async function renderReports(type){
           <div class="r-name">${escapeHtml(r.name)} (${escapeHtml(r.faction)})</div>
           <div class="r-date">${r.date}</div>
         </div>
-        <button class="r-delete" onclick="deleteReport('${type}', '${r.id}')">Удалить</button>
+        ${currentUser && currentUser.role === 'admin' ? `<button class="r-delete" onclick="deleteReport('${type}', '${r.id}')">Удалить</button>` : ''}
       </div>
       ${r.problems ? `<div class="r-field"><b>Проблемы:</b> ${escapeHtml(r.problems)}</div>` : ''}
       ${r.improvements ? `<div class="r-field"><b>Улучшения:</b> ${escapeHtml(r.improvements)}</div>` : ''}
@@ -1420,7 +1310,10 @@ async function renderReports(type){
 
 async function saveReport(type){
   const prefix = type === 'gov' ? 'reportGov' : 'reportCrime';
-  const faction = document.getElementById(prefix + 'Faction').value;
+  let faction = document.getElementById(prefix + 'Faction').value;
+  if(currentUser && currentUser.role === 'leader'){
+    faction = currentUser.faction;
+  }
   const name = document.getElementById(prefix + 'Name').value.trim();
   const date = document.getElementById(prefix + 'Date').value;
   const problems = document.getElementById(prefix + 'Problems').value.trim();
@@ -1479,11 +1372,21 @@ function initReportSelects(){
   const factions = Object.keys(leaderData).map(key => ({ key, label: key }));
   let govFactions = factions.filter(f => leaderData[f.key].category === 'gov' || leaderData[f.key].category === 'judicial');
   let crimeFactions = factions.filter(f => leaderData[f.key].category === 'street' || leaderData[f.key].category === 'syndicate' || leaderData[f.key].category === 'other');
-  // Для админа — все
+  if(currentUser && currentUser.role === 'leader'){
+    govFactions = govFactions.filter(f => f.key === currentUser.faction);
+    crimeFactions = crimeFactions.filter(f => f.key === currentUser.faction);
+  }
   const govSelect = document.getElementById('reportGovFaction');
   const crimeSelect = document.getElementById('reportCrimeFaction');
   govSelect.innerHTML = govFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
   crimeSelect.innerHTML = crimeFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
+  if(currentUser && currentUser.role === 'leader'){
+    govSelect.disabled = true;
+    crimeSelect.disabled = true;
+  } else {
+    govSelect.disabled = false;
+    crimeSelect.disabled = false;
+  }
 }
 
 function updateLeaderName(type){
@@ -1504,70 +1407,7 @@ function updateLeaderName(type){
 }
 
 // =======================================================================
-// 7. ОТЧЁТЫ ДЛЯ ЛИДЕРА
-// =======================================================================
-function initLeaderReportForm(){
-  if(!currentUser || currentUser.role !== 'leader') return;
-  const faction = currentUser.faction;
-  const select = document.getElementById('leaderReportFaction');
-  select.innerHTML = `<option value="${faction}">${faction}</option>`;
-  select.disabled = true;
-  // Подставляем имя лидера
-  if(leaderData && leaderData[faction]){
-    const nameInput = document.getElementById('leaderReportName');
-    const nickname = leaderData[faction].nickname;
-    if(nickname && nickname !== '-'){
-      nameInput.value = nickname;
-    } else {
-      nameInput.value = '';
-    }
-  }
-}
-
-async function renderLeaderReports(){
-  // Лидер не видит список отчётов, поэтому ничего не делаем
-}
-
-async function saveLeaderReport(){
-  if(!currentUser || currentUser.role !== 'leader'){
-    toast('Доступ запрещён');
-    return;
-  }
-  const faction = currentUser.faction;
-  const name = document.getElementById('leaderReportName').value.trim();
-  const date = document.getElementById('leaderReportDate').value;
-  const problems = document.getElementById('leaderReportProblems').value.trim();
-  const improvements = document.getElementById('leaderReportImprovements').value.trim();
-  const comment = document.getElementById('leaderReportComment').value.trim();
-  if(!name || !date){
-    toast('Заполните имя лидера и дату');
-    return;
-  }
-  try {
-    await db.collection('reports').add({
-      faction,
-      name,
-      date,
-      problems,
-      improvements,
-      comment,
-      authorEmail: currentUser.email,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('leaderReportProblems').value = '';
-    document.getElementById('leaderReportImprovements').value = '';
-    document.getElementById('leaderReportComment').value = '';
-    document.getElementById('leaderReportDate').value = '';
-    toast('Отчёт отправлен');
-    // Лидер не видит список, так что ничего не обновляем
-  } catch(err){
-    console.error('Ошибка сохранения отчёта:', err);
-    toast('Ошибка сохранения отчёта: ' + err.message);
-  }
-}
-
-// =======================================================================
-// 8. КУРИРУЕМЫЕ ФРАКЦИИ
+// 7. КУРИРУЕМЫЕ ФРАКЦИИ
 // =======================================================================
 function getMyFactions(){
   try{ return JSON.parse(localStorage.getItem('myFactions') || '[]'); }catch(e){ return []; }
@@ -1578,10 +1418,8 @@ function setMyFactions(arr){
   renderFactionToggles();
   renderMyFactionsChips();
   renderLeaders();
-  if(currentUser && currentUser.role === 'admin'){
-    renderReports('gov');
-    renderReports('crime');
-  }
+  renderReports('gov');
+  renderReports('crime');
 }
 
 function getDisplayFactions(){
@@ -1694,7 +1532,7 @@ function removeGov(){
 }
 
 // =======================================================================
-// 9. ЗАГРУЗКА ДАННЫХ С ФОРУМА
+// 8. ЗАГРУЗКА ДАННЫХ С ФОРУМА
 // =======================================================================
 function loadCachedLeaders(){
   try{ const raw = localStorage.getItem('leaderData'); if(raw) leaderData = JSON.parse(raw); }catch(e){} }
@@ -1719,16 +1557,13 @@ async function fetchLeaders(force){
       else if(force) toast('Данные обновлены');
       renderFactionToggles();
       renderMyFactionsChips();
-      // Для админа обновляем селекты отчётов
-      if(currentUser && currentUser.role === 'admin'){
-        initReportSelects();
-        renderReports('gov');
-        renderReports('crime');
-      } else if(currentUser && currentUser.role === 'leader'){
-        initLeaderReportForm();
-      }
+      initReportSelects();
+      updateLeaderName('gov');
+      updateLeaderName('crime');
       fillManagerFactionSelect();
       if(currentUser && currentUser.role === 'admin') loadLeadersList();
+      renderReports('gov');
+      renderReports('crime');
     } else throw new Error('Пустой ответ API');
   }catch(err){
     console.error(err);
@@ -1842,7 +1677,7 @@ function renderCard(faction, entry){
 }
 
 // =======================================================================
-// 10. НАВИГАЦИЯ
+// 9. НАВИГАЦИЯ
 // =======================================================================
 function switchTab(tabId){
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1851,10 +1686,7 @@ function switchTab(tabId){
   document.querySelectorAll('.header-tabs .tab-btn').forEach(b => b.classList.remove('active'));
   const btn = document.querySelector(`.header-tabs .tab-btn[data-tab="${tabId}"]`);
   if(btn) btn.classList.add('active');
-  if(tabId !== 'reports-admin' && tabId !== 'leader-report'){
-    const dropdown = document.getElementById('reportsDropdown');
-    if(dropdown) dropdown.classList.remove('open');
-  }
+  if(tabId !== 'reports') document.getElementById('reportsDropdown').classList.remove('open');
   if(tabId === 'leaders-manager' && currentUser && currentUser.role === 'admin'){
     loadLeadersList();
   }
@@ -1862,20 +1694,51 @@ function switchTab(tabId){
 function goHome(){ switchTab('leaders'); }
 
 // =======================================================================
-// 11. ОБРАБОТЧИКИ СОБЫТИЙ
+// 10. ОБРАБОТЧИКИ СОБЫТИЙ
 // =======================================================================
 document.querySelectorAll('.header-tabs .tab-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
     const tab = this.dataset.tab;
-    if(tab === 'reports-admin' || tab === 'leader-report') {
-      // Просто переключаем вкладку
-      switchTab(tab);
+    if(tab === 'reports') return;
+    if(tab === 'gov' || tab === 'crime'){
+      const panel = tab === 'gov' ? 'Gov' : 'Crime';
+      document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('reportPanel' + panel).classList.add('active');
+      document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('reportsDropdown').classList.remove('open');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-reports').classList.add('active');
+      document.querySelectorAll('.header-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.header-tabs .tab-btn[data-tab="reports"]').classList.add('active');
       return;
     }
-    // Если админ и клик на кнопке "Отчёты" (выпадающее меню) — ничего не делаем
-    if(tab === 'reports') return;
-    // Остальные вкладки
     switchTab(tab);
+  });
+});
+
+document.getElementById('reportsToggle').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('reportsDropdown').classList.toggle('open');
+});
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('reportsDropdown');
+  if(!dropdown.contains(e.target)) dropdown.classList.remove('open');
+});
+
+document.querySelectorAll('.report-sub-btn').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const report = this.dataset.report;
+    document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('reportPanel' + (report === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
+    document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-reports').classList.add('active');
+    document.querySelectorAll('.header-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('.header-tabs .tab-btn[data-tab="reports"]').classList.add('active');
+    document.getElementById('reportsDropdown').classList.remove('open');
   });
 });
 
@@ -1886,7 +1749,7 @@ document.getElementById('logoutBtn').addEventListener('click', function(){
 document.getElementById('googleLoginBtn').addEventListener('click', login);
 
 // =======================================================================
-// 12. ИНИЦИАЛИЗАЦИЯ
+// 11. ИНИЦИАЛИЗАЦИЯ
 // =======================================================================
 loadCachedLeaders();
 renderLeaders();
@@ -1895,10 +1758,33 @@ updateLastUpdateText();
 if(leaderData){
   renderFactionToggles();
   renderMyFactionsChips();
+  initReportSelects();
+  updateLeaderName('gov');
+  updateLeaderName('crime');
   fillManagerFactionSelect();
+} else {
+  document.getElementById('settingsCategories').innerHTML = '<div class="empty-state">Загрузите данные, чтобы увидеть фракции</div>';
+  document.getElementById('myFactionsChips').innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
 }
 
 initAuth();
+
+// При загрузке админом — подгружаем список лидеров
+auth.onAuthStateChanged(user => {
+  if(user && ADMIN_EMAILS.includes(user.email)){
+    setTimeout(() => {
+      if(currentUser && currentUser.role === 'admin') {
+        loadLeadersList();
+      }
+    }, 500);
+  }
+});
+
+// Загружаем отчёты при инициализации
+setTimeout(() => {
+  renderReports('gov');
+  renderReports('crime');
+}, 1000);
 
 // Первая загрузка данных с форума
 fetchLeaders(false);

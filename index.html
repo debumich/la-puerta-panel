@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Кураторская панель — La Puerta</title>
+<link rel="icon" type="image/x-icon" href="/Icon.ico">
 <style>
   :root{
     --bg: #080c1a;
@@ -59,7 +60,7 @@
   .wrap{
     max-width: 1180px;
     margin: 0 auto;
-    padding: 28px 20px 80px;
+    padding: 0 20px 80px;
     position:relative;
   }
   .glow-dot{
@@ -74,47 +75,69 @@
   .glow-dot:nth-child(2){ width:400px; height:400px; background:var(--accent2); bottom:-150px; right:-150px; }
   .glow-dot:nth-child(3){ width:200px; height:200px; background:#f5c542; top:40%; left:60%; opacity:0.15; }
 
-  header{
-    display:flex;
-    flex-wrap:wrap;
-    gap:16px;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom: 26px;
-    position:relative;
-    z-index:1;
+  /* ===== НОВАЯ ШАПКА ===== */
+  .header{
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   }
-  .brand h1{
-    margin:0;
-    font-size: 22px;
+  .header-left{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .header-logo{
+    height: 40px;
+    width: auto;
+    border-radius: 6px;
+  }
+  .header-title{
+    font-size: 18px;
     font-weight: 700;
-    letter-spacing:-0.01em;
+    letter-spacing: -0.01em;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  .status-row{
-    display:flex;
-    align-items:center;
-    gap:14px;
+  .header-right{
+    display: flex;
+    align-items: center;
+    gap: 16px;
     font-size: 13px;
     color: var(--text-dim);
   }
-  .status-dot{
-    display:inline-flex;
-    align-items:center;
-    gap:7px;
+  .header-status{
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .status-dot::before{
-    content:'';
-    width:8px; height:8px;
-    border-radius:50%;
+  .header-status .dot{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
     background: var(--grey);
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+    transition: background var(--transition);
   }
-  .status-dot[data-state="online"]::before{ background: var(--green); box-shadow: 0 0 8px rgba(61,220,132,0.6); }
-  .status-dot[data-state="loading"]::before{ background: var(--yellow); animation: pulse 1s infinite; }
-  .status-dot[data-state="offline"]::before{ background: var(--red); }
-  @keyframes pulse{
-    0%,100%{ opacity:1; }
-    50%{ opacity:0.35; }
+  .header-status .dot.online{ background: var(--green); box-shadow: 0 0 8px rgba(61,220,132,0.6); }
+  .header-status .dot.loading{ background: var(--yellow); animation: pulse 1s infinite; }
+  .header-status .dot.offline{ background: var(--red); }
+  .header-time{
+    color: var(--text-faint);
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .tabs{
@@ -372,11 +395,12 @@
     font-family: inherit;
     font-size: 13.5px;
     resize: vertical;
-    transition: border-color var(--transition), background var(--transition);
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
   }
   .field input:focus, .field textarea:focus, .field select:focus{
     outline: none;
     border-color: var(--accent2);
+    box-shadow: 0 0 0 2px rgba(124,92,255,0.25);
     background: rgba(255,255,255,0.06);
   }
   .field select option{ background: #0d1226; }
@@ -441,12 +465,14 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  /* ===== НАСТРОЙКИ ===== */
   .settings-panel{
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 18px 20px;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
   }
   .settings-panel h3{
     margin: 0 0 4px 0;
@@ -598,11 +624,18 @@
 
 <div class="wrap">
 
-  <header>
-    <div class="brand"><h1>Кураторская панель — La Puerta</h1></div>
-    <div class="status-row">
-      <span class="status-dot" id="statusDot" data-state="loading">Подключение…</span>
-      <span id="lastUpdateText">—</span>
+  <!-- НОВАЯ ШАПКА -->
+  <header class="header">
+    <div class="header-left">
+      <img src="/Header.png" alt="La Puerta" class="header-logo">
+      <span class="header-title">Кураторская панель — La Puerta</span>
+    </div>
+    <div class="header-right">
+      <div class="header-status">
+        <span class="dot" id="headerDot"></span>
+        <span id="headerStatusText">Подключение…</span>
+      </div>
+      <span class="header-time" id="headerTime">—</span>
     </div>
   </header>
 
@@ -626,7 +659,6 @@
       </div>
       <button class="btn btn-primary" id="refreshBtn">
         <span class="spinner"></span>
-        <span class="btn-icon">↻</span>
         <span>Обновить</span>
       </button>
     </div>
@@ -689,7 +721,7 @@
     </div>
   </section>
 
-  <!-- ========= НАСТРОЙКИ (GOV единая кнопка) ========= -->
+  <!-- ========= НАСТРОЙКИ ========= -->
   <section class="panel" id="panel-settings">
     <div class="settings-panel">
       <h3>Курируемые фракции</h3>
@@ -736,9 +768,13 @@ function toast(msg){
 }
 
 function setStatus(state, label){
-  const dot = document.getElementById('statusDot');
-  dot.dataset.state = state;
-  dot.textContent = label;
+  const dot = document.getElementById('headerDot');
+  const text = document.getElementById('headerStatusText');
+  dot.className = 'dot';
+  if(state === 'online') { dot.classList.add('online'); text.textContent = 'Онлайн'; }
+  else if(state === 'loading') { dot.classList.add('loading'); text.textContent = label || 'Загрузка…'; }
+  else if(state === 'offline') { dot.classList.add('offline'); text.textContent = 'Офлайн'; }
+  else { dot.style.background = 'var(--grey)'; text.textContent = label || 'Подключение…'; }
 }
 
 function parseDate(str){
@@ -785,7 +821,6 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// ===== КУРИРУЕМЫЕ ФРАКЦИИ =====
 function getMyFactions(){
   try{
     const raw = localStorage.getItem('myFactions');
@@ -856,7 +891,6 @@ function renderFactionToggles(){
     if (!groups[cat]) groups[cat] = [];
     groups[cat].push(key);
   });
-  // Добавляем GOV в категорию 'gov' если есть
   if (!groups['gov']) groups['gov'] = [];
   groups['gov'].unshift('__GOV__');
 
@@ -893,7 +927,6 @@ function renderMyFactionsChips(){
     container.innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
     return;
   }
-  // Фильтруем GOV_KEYS: показываем только один GOV, если все три выбраны
   const hasAllGov = GOV_KEYS.every(k => list.includes(k));
   const filtered = list.filter(k => !GOV_KEYS.includes(k));
   if (hasAllGov) filtered.push('GOV');
@@ -909,7 +942,6 @@ function updateCounter(){
   document.getElementById('selectedCounter').textContent = `Выбрано: ${count}`;
 }
 
-// ===== ЗАГРУЗКА ДАННЫХ =====
 function loadCachedLeaders(){
   try{
     const raw = localStorage.getItem('leaderData');
@@ -920,7 +952,7 @@ function loadCachedLeaders(){
 async function fetchLeaders(force){
   const btn = document.getElementById('refreshBtn');
   if (force) btn.classList.add('loading');
-  setStatus('loading', force ? 'Обновление…' : 'Подключение…');
+  setStatus('loading', 'Обновление…');
 
   let url = '';
   try{
@@ -933,7 +965,7 @@ async function fetchLeaders(force){
       leaderData = data.leaders;
       localStorage.setItem('leaderData', JSON.stringify(leaderData));
       localStorage.setItem('leaderDataTime', data.lastUpdate || new Date().toISOString());
-      setStatus(data.stale ? 'offline' : 'online', data.stale ? 'Устаревшие данные' : 'Онлайн');
+      setStatus('online', 'Онлайн');
       if (data.stale) toast('Не удалось получить свежие данные, показан последний кэш');
       else if (force) toast('Данные обновлены');
       renderFactionToggles();
@@ -957,13 +989,12 @@ async function fetchLeaders(force){
 
 function updateLastUpdateText(){
   const t = localStorage.getItem('leaderDataTime');
-  const el = document.getElementById('lastUpdateText');
+  const el = document.getElementById('headerTime');
   if (!t){ el.textContent = 'нет данных'; return; }
   const d = new Date(t);
   el.textContent = 'обновлено ' + d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
 
-// ===== ОТРИСОВКА ЛИДЕРОВ =====
 function renderLeaders(){
   const root = document.getElementById('leadersRoot');
   root.innerHTML = '';
@@ -1064,7 +1095,6 @@ function renderCard(faction, entry){
   return card;
 }
 
-// ===== ПОДТЯГИВАНИЕ ИМЕНИ ЛИДЕРА =====
 function updateLeaderName(type){
   const prefix = type === 'gov' ? 'reportGov' : 'reportCrime';
   const factionSelect = document.getElementById(prefix + 'Faction');
@@ -1082,7 +1112,6 @@ function updateLeaderName(type){
   }
 }
 
-// ===== ЗАПОЛНЕНИЕ СПИСКОВ В ОТЧЁТАХ =====
 function initReportSelects(){
   if (!leaderData) return;
   const factions = Object.keys(leaderData).map(key => ({ key, label: key }));
@@ -1095,7 +1124,6 @@ function initReportSelects(){
   crimeSelect.innerHTML = crimeFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
 }
 
-// ===== ОТЧЁТЫ =====
 function reportsKey(type){ return type === 'gov' ? 'govReports' : 'crimeReports'; }
 
 function getReports(type){
@@ -1190,7 +1218,6 @@ function renderReports(type){
   `).join('');
 }
 
-// ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
     const tab = this.dataset.tab;
@@ -1201,7 +1228,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       document.getElementById('reportPanel' + panel).classList.add('active');
       document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
-      // Закрываем выпадающий список
       document.getElementById('reportsDropdown').classList.remove('open');
       return;
     }
@@ -1212,14 +1238,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-// Toggle для выпадающего меню "Отчёты"
 document.getElementById('reportsToggle').addEventListener('click', function(e) {
   e.stopPropagation();
   const dropdown = document.getElementById('reportsDropdown');
   dropdown.classList.toggle('open');
 });
 
-// Закрытие при клике вне области
 document.addEventListener('click', function(e) {
   const dropdown = document.getElementById('reportsDropdown');
   if (!dropdown.contains(e.target)) {
@@ -1227,7 +1251,6 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Обработка кликов по пунктам меню
 document.querySelectorAll('.report-sub-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
     e.stopPropagation();
@@ -1240,14 +1263,12 @@ document.querySelectorAll('.report-sub-btn').forEach(btn => {
     document.querySelector('[data-tab="reports"]').classList.add('active');
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.getElementById('panel-reports').classList.add('active');
-    // Закрываем дропдаун
     document.getElementById('reportsDropdown').classList.remove('open');
   });
 });
 
 document.getElementById('refreshBtn').addEventListener('click', () => fetchLeaders(true));
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
 loadCachedLeaders();
 renderLeaders();
 updateLastUpdateText();

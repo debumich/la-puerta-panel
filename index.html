@@ -140,15 +140,18 @@
   }
   .header-right{
     display: flex;
-    align-items: center;
-    gap: 18px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
     font-size: 13px;
     color: var(--text-dim);
+    line-height: 1.4;
   }
   .header-status{
     display: flex;
     align-items: center;
     gap: 6px;
+    font-size: 13px;
   }
   .header-status .dot{
     width: 8px;
@@ -534,12 +537,6 @@
     padding: 6px 14px;
     font-size: 12px;
   }
-  .settings-actions .counter{
-    margin-left:auto;
-    color: var(--text-faint);
-    font-size: 13px;
-    white-space:nowrap;
-  }
   .selected-chips{
     display:flex;
     flex-wrap:wrap;
@@ -644,11 +641,11 @@
       </div>
     </div>
     <div class="header-right">
+      <span class="header-time" id="headerTime">—</span>
       <div class="header-status">
         <span class="dot" id="headerDot"></span>
         <span id="headerStatusText">Подключение…</span>
       </div>
-      <span class="header-time" id="headerTime">—</span>
     </div>
   </header>
 
@@ -728,7 +725,6 @@
       <div class="settings-actions">
         <button class="btn" onclick="selectAllFactions()">Выбрать всё</button>
         <button class="btn" onclick="deselectAllFactions()">Сбросить всё</button>
-        <span class="counter" id="selectedCounter">Выбрано: 0</span>
       </div>
       <div>
         <label style="font-size:12px; color:var(--text-dim);">Ваш список:</label>
@@ -833,7 +829,6 @@ function setMyFactions(arr){
   renderLeaders();
   renderReports('gov');
   renderReports('crime');
-  updateCounter();
 }
 
 function getDisplayFactions(){
@@ -949,11 +944,6 @@ function removeGov(){
   toast('GOV удалён');
 }
 
-function updateCounter(){
-  const count = getDisplayFactions().length;
-  document.getElementById('selectedCounter').textContent = `Выбрано: ${count}`;
-}
-
 function loadCachedLeaders(){
   try{
     const raw = localStorage.getItem('leaderData');
@@ -982,7 +972,6 @@ async function fetchLeaders(force){
       else if (force) toast('Данные обновлены');
       renderFactionToggles();
       renderMyFactionsChips();
-      updateCounter();
       initReportSelects();
       updateLeaderName('gov');
       updateLeaderName('crime');
@@ -1305,7 +1294,6 @@ updateLastUpdateText();
 if (leaderData) {
   renderFactionToggles();
   renderMyFactionsChips();
-  updateCounter();
   initReportSelects();
   updateLeaderName('gov');
   updateLeaderName('crime');

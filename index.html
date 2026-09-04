@@ -22,6 +22,7 @@
     --red: #ff5c6c;
     --grey: #5a6180;
     --radius: 14px;
+    --transition: 0.25s ease;
   }
   *{ box-sizing: border-box; }
   html,body{
@@ -138,7 +139,7 @@
     font-size: 13.5px;
     font-weight: 600;
     cursor:pointer;
-    transition: color .15s ease, background .15s ease;
+    transition: color var(--transition), background var(--transition);
     position:relative;
   }
   .tab-btn:hover{ color: var(--text); }
@@ -147,7 +148,9 @@
     color: #fff;
   }
 
-  .dropdown-tab{ position:relative; }
+  .dropdown-tab{
+    position:relative;
+  }
   .dropdown-tab .dropdown-content{
     display:none;
     position:absolute;
@@ -160,19 +163,39 @@
     min-width:180px;
     box-shadow:0 8px 30px rgba(0,0,0,0.6);
     z-index:10;
+    opacity:0;
+    transform:translateY(-6px);
+    transition:opacity var(--transition), transform var(--transition);
+    pointer-events:none;
   }
   .dropdown-tab:hover .dropdown-content,
-  .dropdown-tab:focus-within .dropdown-content{ display:block; }
+  .dropdown-tab:focus-within .dropdown-content{
+    display:block;
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
   .dropdown-tab .dropdown-content .tab-btn{
     display:block;
     width:100%;
     text-align:left;
     border-radius:6px;
   }
-  .dropdown-tab .dropdown-content .tab-btn:hover{ background:var(--card-hover); }
+  .dropdown-tab .dropdown-content .tab-btn:hover{
+    background:var(--card-hover);
+  }
 
-  .panel{ display:none; }
-  .panel.active{ display:block; }
+  .panel{
+    display:none;
+    animation: fadeSlide 0.3s ease;
+  }
+  .panel.active{
+    display:block;
+  }
+  @keyframes fadeSlide{
+    from{ opacity:0; transform:translateY(6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
 
   .toolbar{
     display:flex;
@@ -195,7 +218,7 @@
     display:inline-flex;
     align-items:center;
     gap:8px;
-    transition: background .15s ease, transform .1s ease, border-color .15s ease;
+    transition: background var(--transition), border-color var(--transition), transform 0.1s;
   }
   .btn:hover{ background: var(--card-hover); border-color: rgba(255,255,255,0.18); }
   .btn:active{ transform: scale(0.97); }
@@ -239,7 +262,8 @@
     padding: 16px 16px 14px;
     position:relative;
     overflow:hidden;
-    transition: border-color .15s ease, background .15s ease;
+    transition: background var(--transition), border-color var(--transition);
+    animation: fadeSlide 0.3s ease;
   }
   .leader-card:hover{
     background: var(--card-hover);
@@ -330,6 +354,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 18px;
+    animation: fadeSlide 0.25s ease;
   }
   .form-card h3, .list-card h3{
     margin: 0 0 14px;
@@ -353,6 +378,7 @@
     font-family: inherit;
     font-size: 13.5px;
     resize: vertical;
+    transition: border-color var(--transition), background var(--transition);
   }
   .field input:focus, .field textarea:focus, .field select:focus{
     outline: none;
@@ -373,6 +399,10 @@
     border-radius: 10px;
     padding: 12px 14px;
     margin-bottom: 10px;
+    transition: background var(--transition);
+  }
+  .report-item:hover{
+    background: rgba(255,255,255,0.06);
   }
   .report-item .r-top{
     display:flex;
@@ -392,8 +422,9 @@
     font-size: 12px;
     font-weight:600;
     padding: 3px 6px;
+    transition: color var(--transition);
   }
-  .r-delete:hover{ text-decoration: underline; }
+  .r-delete:hover{ color: #ff7a7a; }
 
   .toast{
     position: fixed;
@@ -408,7 +439,7 @@
     font-size: 13px;
     opacity: 0;
     pointer-events:none;
-    transition: opacity .2s ease, transform .2s ease;
+    transition: opacity var(--transition), transform var(--transition);
     z-index: 100;
     box-shadow: 0 10px 30px rgba(0,0,0,0.4);
   }
@@ -417,7 +448,7 @@
     transform: translateX(-50%) translateY(0);
   }
 
-  /* ===== НОВЫЙ ДИЗАЙН НАСТРОЕК ===== */
+  /* ===== НАСТРОЙКИ (обновлённые) ===== */
   .settings-panel{
     background: var(--card);
     border: 1px solid var(--border);
@@ -435,35 +466,51 @@
     margin-bottom: 16px;
     display: block;
   }
+  .settings-category{
+    margin-bottom: 18px;
+  }
+  .settings-category .cat-title{
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+  }
   .faction-toggle-grid{
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 8px;
-    margin: 12px 0 16px;
   }
   .faction-toggle-item{
     background: var(--card-hover);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 8px 10px;
+    padding: 8px 6px;
     text-align: center;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all var(--transition);
     user-select: none;
     color: var(--text-dim);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    height:38px;
   }
   .faction-toggle-item:hover{
     background: rgba(255,255,255,0.08);
     border-color: rgba(255,255,255,0.2);
     color: var(--text);
+    transform: translateY(-1px);
   }
   .faction-toggle-item.active{
     background: var(--gradient);
     border-color: transparent;
     color: #fff;
     box-shadow: 0 0 12px rgba(124,92,255,0.25);
+    transform: translateY(-1px);
   }
   .faction-toggle-item.active:hover{
     filter: brightness(1.05);
@@ -473,9 +520,9 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    margin-right: 6px;
     background: var(--grey);
-    transition: background 0.15s ease;
+    transition: background var(--transition);
+    flex-shrink:0;
   }
   .faction-toggle-item.active .indicator{
     background: var(--green);
@@ -485,7 +532,7 @@
     display:flex;
     gap:10px;
     flex-wrap:wrap;
-    margin-bottom: 12px;
+    margin: 12px 0 16px;
   }
   .settings-actions .btn{
     padding: 6px 14px;
@@ -507,6 +554,10 @@
     align-items:center;
     gap:6px;
     color: var(--text);
+    transition: background var(--transition);
+  }
+  .selected-chips .chip:hover{
+    background: rgba(255,255,255,0.08);
   }
   .selected-chips .chip .remove{
     cursor:pointer;
@@ -522,6 +573,17 @@
   .empty-chips{
     color: var(--text-faint);
     font-size: 13px;
+  }
+
+  /* скрываем подвкладки внутри отчётов — теперь переключение через меню */
+  .report-panel{
+    display:none;
+  }
+  .report-panel.active{
+    display:block;
+  }
+  .report-sub-tabs{
+    display:none;
   }
 </style>
 </head>
@@ -545,8 +607,8 @@
     <div class="dropdown-tab">
       <button class="tab-btn" data-tab="reports">Отчёты ▾</button>
       <div class="dropdown-content">
-        <button class="tab-btn" data-tab="reports-gov">Государственные</button>
-        <button class="tab-btn" data-tab="reports-crime">Криминальные</button>
+        <button class="tab-btn report-sub-btn" data-report="gov">Государственные</button>
+        <button class="tab-btn report-sub-btn" data-report="crime">Криминальные</button>
       </div>
     </div>
     <button class="tab-btn" data-tab="settings">Настройки</button>
@@ -569,26 +631,20 @@
 
   <!-- ========= ОТЧЁТЫ ========= -->
   <section class="panel" id="panel-reports">
-    <div class="report-sub-tabs active" id="reportTypeTabs">
-      <button class="tab-btn active" data-report="gov">Государственные</button>
-      <button class="tab-btn" data-report="crime">Криминальные</button>
-    </div>
-
+    <!-- Панель государственных отчётов -->
     <div class="report-panel active" id="reportPanelGov">
       <div class="report-layout">
         <div class="form-card">
-          <h3>Новый отчёт (гос. фракция)</h3>
+          <h3>Новый отчёт (государственная фракция)</h3>
           <div class="field">
             <label>Фракция</label>
-            <select id="reportGovFaction" onchange="updateLeaderName('gov')">
-              <!-- заполняется динамически -->
-            </select>
+            <select id="reportGovFaction" onchange="updateLeaderName('gov')"></select>
           </div>
           <div class="field"><label>Имя лидера</label><input type="text" id="reportGovName" placeholder="Подставится автоматически"></div>
           <div class="field"><label>Дата отчёта</label><input type="date" id="reportGovDate"></div>
           <div class="field"><label>Основные проблемы</label><textarea id="reportGovProblems" rows="3"></textarea></div>
-          <div class="field"><label>Улучшения / достижения</label><textarea id="reportGovImprovements" rows="3"></textarea></div>
-          <div class="field"><label>Доп. комментарий</label><textarea id="reportGovComment" rows="2"></textarea></div>
+          <div class="field"><label>Улучшения и достижения</label><textarea id="reportGovImprovements" rows="3"></textarea></div>
+          <div class="field"><label>Дополнительный комментарий</label><textarea id="reportGovComment" rows="2"></textarea></div>
           <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('gov')">Сохранить</button>
         </div>
         <div class="list-card">
@@ -603,21 +659,20 @@
       </div>
     </div>
 
+    <!-- Панель криминальных отчётов -->
     <div class="report-panel" id="reportPanelCrime">
       <div class="report-layout">
         <div class="form-card">
-          <h3>Новый отчёт (крим. фракция)</h3>
+          <h3>Новый отчёт (криминальная фракция)</h3>
           <div class="field">
             <label>Фракция</label>
-            <select id="reportCrimeFaction" onchange="updateLeaderName('crime')">
-              <!-- заполняется динамически -->
-            </select>
+            <select id="reportCrimeFaction" onchange="updateLeaderName('crime')"></select>
           </div>
           <div class="field"><label>Имя лидера</label><input type="text" id="reportCrimeName" placeholder="Подставится автоматически"></div>
           <div class="field"><label>Дата отчёта</label><input type="date" id="reportCrimeDate"></div>
           <div class="field"><label>Основные проблемы</label><textarea id="reportCrimeProblems" rows="3"></textarea></div>
-          <div class="field"><label>Улучшения / достижения</label><textarea id="reportCrimeImprovements" rows="3"></textarea></div>
-          <div class="field"><label>Доп. комментарий</label><textarea id="reportCrimeComment" rows="2"></textarea></div>
+          <div class="field"><label>Улучшения и достижения</label><textarea id="reportCrimeImprovements" rows="3"></textarea></div>
+          <div class="field"><label>Дополнительный комментарий</label><textarea id="reportCrimeComment" rows="2"></textarea></div>
           <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('crime')">Сохранить</button>
         </div>
         <div class="list-card">
@@ -633,14 +688,12 @@
     </div>
   </section>
 
-  <!-- ========= НАСТРОЙКИ (НОВЫЙ ДИЗАЙН) ========= -->
+  <!-- ========= НАСТРОЙКИ (с группировкой) ========= -->
   <section class="panel" id="panel-settings">
     <div class="settings-panel">
       <h3>Курируемые фракции</h3>
       <span class="sub">Выберите фракции, с которыми работаете. Остальные будут скрыты из общего списка и отчётов.</span>
-      <div class="faction-toggle-grid" id="factionToggleGrid">
-        <!-- карточки-переключатели заполняются скриптом -->
-      </div>
+      <div id="settingsCategories"></div>
       <div class="settings-actions">
         <button class="btn" onclick="selectAllFactions()">Выбрать всё</button>
         <button class="btn" onclick="deselectAllFactions()">Сбросить всё</button>
@@ -658,23 +711,19 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ============================================================
-// НАСТРОЙКИ
-// ============================================================
 const API_URL = 'https://la-puerta-proxy.vercel.app/';
 
 const CATEGORY_NAMES = {
   'judicial': 'Судебная власть',
-  'gov': 'Исполнительная власть и силовые структуры',
+  'gov': 'Государственные',
   'street': 'Уличные группировки',
   'syndicate': 'Преступные синдикаты',
   'other': 'Другие'
 };
 const CATEGORY_ORDER = ['gov', 'judicial', 'street', 'syndicate', 'other'];
 
-// ============================================================
-// УТИЛИТЫ
-// ============================================================
+let leaderData = null;
+
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -733,9 +782,7 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// ============================================================
-// РАБОТА С КУРИРУЕМЫМИ ФРАКЦИЯМИ (НОВЫЙ ПОДХОД)
-// ============================================================
+// ===== РАБОТА С КУРИРУЕМЫМИ ФРАКЦИЯМИ =====
 function getMyFactions(){
   try{
     const raw = localStorage.getItem('myFactions');
@@ -778,19 +825,35 @@ function deselectAllFactions(){
 }
 
 function renderFactionToggles(){
-  const container = document.getElementById('factionToggleGrid');
+  const container = document.getElementById('settingsCategories');
   if (!leaderData) {
     container.innerHTML = '<div class="empty-state">Загрузите данные, чтобы увидеть фракции</div>';
     return;
   }
   const my = getMyFactions();
-  const factions = Object.keys(leaderData).sort();
-  container.innerHTML = factions.map(key => {
-    const active = my.includes(key) ? 'active' : '';
-    return `<div class="faction-toggle-item ${active}" onclick="toggleFaction('${key}')">
-      <span class="indicator"></span>${key}
-    </div>`;
-  }).join('');
+  // группируем по категориям
+  const groups = {};
+  Object.keys(leaderData).forEach(key => {
+    const cat = leaderData[key].category || 'other';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(key);
+  });
+  let html = '';
+  const sortedCats = Object.keys(groups).sort((a,b) => CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b));
+  sortedCats.forEach(cat => {
+    const items = groups[cat].sort();
+    html += `<div class="settings-category">
+      <div class="cat-title">${CATEGORY_NAMES[cat] || cat}</div>
+      <div class="faction-toggle-grid">`;
+    items.forEach(key => {
+      const active = my.includes(key) ? 'active' : '';
+      html += `<div class="faction-toggle-item ${active}" onclick="toggleFaction('${key}')">
+        <span class="indicator"></span>${key}
+      </div>`;
+    });
+    html += `</div></div>`;
+  });
+  container.innerHTML = html;
 }
 
 function renderMyFactionsChips(){
@@ -810,11 +873,7 @@ function updateCounter(){
   document.getElementById('selectedCounter').textContent = `Выбрано: ${count}`;
 }
 
-// ============================================================
-// ЗАГРУЗКА ДАННЫХ
-// ============================================================
-let leaderData = null;
-
+// ===== ЗАГРУЗКА ДАННЫХ =====
 function loadCachedLeaders(){
   try{
     const raw = localStorage.getItem('leaderData');
@@ -841,7 +900,6 @@ async function fetchLeaders(force){
       setStatus(data.stale ? 'offline' : 'online', data.stale ? 'Устаревшие данные' : 'Онлайн');
       if (data.stale) toast('Не удалось получить свежие данные, показан последний кэш');
       else if (force) toast('Данные обновлены');
-      // обновляем все динамические элементы
       renderFactionToggles();
       renderMyFactionsChips();
       updateCounter();
@@ -869,9 +927,7 @@ function updateLastUpdateText(){
   el.textContent = 'обновлено ' + d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
 
-// ============================================================
-// ОТРИСОВКА ЛИДЕРОВ (ДИНАМИЧЕСКАЯ)
-// ============================================================
+// ===== ОТРИСОВКА ЛИДЕРОВ =====
 function renderLeaders(){
   const root = document.getElementById('leadersRoot');
   root.innerHTML = '';
@@ -972,9 +1028,7 @@ function renderCard(faction, entry){
   return card;
 }
 
-// ============================================================
-// ПОДТЯГИВАНИЕ ИМЕНИ ЛИДЕРА В ОТЧЁТАХ
-// ============================================================
+// ===== ПОДТЯГИВАНИЕ ИМЕНИ ЛИДЕРА =====
 function updateLeaderName(type){
   const prefix = type === 'gov' ? 'reportGov' : 'reportCrime';
   const factionSelect = document.getElementById(prefix + 'Faction');
@@ -992,9 +1046,7 @@ function updateLeaderName(type){
   }
 }
 
-// ============================================================
-// ДИНАМИЧЕСКОЕ ЗАПОЛНЕНИЕ СПИСКОВ В ОТЧЁТАХ
-// ============================================================
+// ===== ЗАПОЛНЕНИЕ СПИСКОВ В ОТЧЁТАХ =====
 function initReportSelects(){
   if (!leaderData) return;
   const factions = Object.keys(leaderData).map(key => ({ key, label: key }));
@@ -1007,9 +1059,7 @@ function initReportSelects(){
   crimeSelect.innerHTML = crimeFactions.map(f => `<option value="${f.key}">${f.label}</option>`).join('');
 }
 
-// ============================================================
-// ОТЧЁТЫ
-// ============================================================
+// ===== ОТЧЁТЫ =====
 function reportsKey(type){ return type === 'gov' ? 'govReports' : 'crimeReports'; }
 
 function getReports(type){
@@ -1104,23 +1154,19 @@ function renderReports(type){
   `).join('');
 }
 
-// ============================================================
-// ВКЛАДКИ
-// ============================================================
+// ===== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =====
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', function(e) {
-    if (this.dataset.tab === 'reports') return;
     const tab = this.dataset.tab;
-    if (tab === 'reports-gov' || tab === 'reports-crime') {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector('[data-tab="reports"]').classList.add('active');
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      document.getElementById('panel-reports').classList.add('active');
-      document.querySelectorAll('.report-sub-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-      const reportType = tab === 'reports-gov' ? 'gov' : 'crime';
-      document.querySelector(`.report-sub-tabs .tab-btn[data-report="${reportType}"]`).classList.add('active');
+    if (tab === 'reports') return;
+    if (tab === 'gov' || tab === 'crime') {
+      // переключение подвкладок в отчётах
+      const panel = tab === 'gov' ? 'Gov' : 'Crime';
       document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
-      document.getElementById('reportPanel' + (reportType === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
+      document.getElementById('reportPanel' + panel).classList.add('active');
+      // подсвечиваем кнопки в выпадающем меню
+      document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
       return;
     }
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1130,21 +1176,28 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
-document.querySelectorAll('.report-sub-tabs .tab-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.report-sub-tabs .tab-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    const type = this.dataset.report;
+// обработка кликов по пунктам в выпадающем меню
+document.querySelectorAll('.report-sub-btn').forEach(btn => {
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const report = this.dataset.report;
+    // активируем панель
     document.querySelectorAll('.report-panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('reportPanel' + (type === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
+    document.getElementById('reportPanel' + (report === 'gov' ? 'Gov' : 'Crime')).classList.add('active');
+    // активируем кнопку в меню
+    document.querySelectorAll('.dropdown-content .tab-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    // делаем вкладку "Отчёты" активной
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-tab="reports"]').classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-reports').classList.add('active');
   });
 });
 
 document.getElementById('refreshBtn').addEventListener('click', () => fetchLeaders(true));
 
-// ============================================================
-// ИНИЦИАЛИЗАЦИЯ
-// ============================================================
+// ===== ИНИЦИАЛИЗАЦИЯ =====
 loadCachedLeaders();
 renderLeaders();
 updateLastUpdateText();
@@ -1157,8 +1210,7 @@ if (leaderData) {
   updateLeaderName('gov');
   updateLeaderName('crime');
 } else {
-  // если данных нет, показываем пустые сетки
-  document.getElementById('factionToggleGrid').innerHTML = '<div class="empty-state">Загрузите данные, чтобы увидеть фракции</div>';
+  document.getElementById('settingsCategories').innerHTML = '<div class="empty-state">Загрузите данные, чтобы увидеть фракции</div>';
   document.getElementById('myFactionsChips').innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
 }
 

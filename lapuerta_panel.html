@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кураторская панель — La Puerta</title>
+<style>
+  :root{
+    --bg: #080c1a;
+    --bg-elevated: #0d1226;
+    --card: rgba(255,255,255,0.045);
+    --card-hover: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.09);
+    --text: #e9ecf6;
+    --text-dim: #8b93b5;
+    --text-faint: #565d7d;
+    --accent1: #7c5cff;
+    --accent2: #4f8cff;
+    --gradient: linear-gradient(135deg, var(--accent1), var(--accent2));
+    --green: #3ddc84;
+    --yellow: #f5c542;
+    --red: #ff5c6c;
+    --grey: #5a6180;
+    --radius: 14px;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(124,92,255,0.16), transparent 60%),
+      radial-gradient(ellipse 900px 500px at 100% 0%, rgba(79,140,255,0.12), transparent 60%),
+      var(--bg);
+  }
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+  header{
+    display:flex;
+    flex-wrap:wrap;
+    gap:16px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 26px;
+  }
+  .brand{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .brand h1{
+    margin:0;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .brand .sub{
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .status-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .status-dot{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+  }
+  .status-dot::before{
+    content:'';
+    width:8px; height:8px;
+    border-radius:50%;
+    background: var(--grey);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
+  }
+  .status-dot[data-state="online"]::before{ background: var(--green); box-shadow: 0 0 8px rgba(61,220,132,0.6); }
+  .status-dot[data-state="loading"]::before{ background: var(--yellow); animation: pulse 1s infinite; }
+  .status-dot[data-state="offline"]::before{ background: var(--red); }
+  @keyframes pulse{
+    0%,100%{ opacity:1; }
+    50%{ opacity:0.35; }
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 5px;
+    border-radius: 12px;
+    width: fit-content;
+    margin-bottom: 22px;
+  }
+  .tab-btn{
+    appearance:none;
+    border:none;
+    background:transparent;
+    color: var(--text-dim);
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor:pointer;
+    transition: color .15s ease, background .15s ease;
+  }
+  .tab-btn:hover{ color: var(--text); }
+  .tab-btn.active{
+    background: var(--gradient);
+    color: #fff;
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+  .toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom: 20px;
+  }
+  .btn{
+    appearance:none;
+    border:1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition: background .15s ease, transform .1s ease, border-color .15s ease;
+  }
+  .btn:hover{ background: var(--card-hover); border-color: rgba(255,255,255,0.18); }
+  .btn:active{ transform: scale(0.97); }
+  .btn:disabled{ opacity:0.55; cursor:default; transform:none; }
+  .btn-primary{
+    background: var(--gradient);
+    border: none;
+    color: #fff;
+  }
+  .btn-primary:hover{ filter: brightness(1.08); background: var(--gradient); }
+  .btn .spinner{
+    width:13px; height:13px;
+    border-radius:50%;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color:#fff;
+    animation: spin .7s linear infinite;
+    display:none;
+  }
+  .btn.loading .spinner{ display:inline-block; }
+  .btn.loading .btn-icon{ display:none; }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .group{ margin-bottom: 30px; }
+  .group-title{
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-dim);
+    margin: 0 0 12px 2px;
+  }
+  .card-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .leader-card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 16px 14px;
+    position:relative;
+    overflow:hidden;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .leader-card:hover{
+    background: var(--card-hover);
+    border-color: rgba(255,255,255,0.16);
+  }
+  .leader-card::before{
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:3px;
+  }
+  .leader-card[data-status="green"]::before{ background: var(--green); }
+  .leader-card[data-status="yellow"]::before{ background: var(--yellow); }
+  .leader-card[data-status="red"]::before{ background: var(--red); }
+  .leader-card[data-status="expired"]::before{ background: var(--red); }
+  .leader-card[data-status="vacant"]::before{ background: var(--grey); }
+  .leader-card[data-status="unknown"]::before{ background: var(--grey); }
+  .lc-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+  .lc-faction{
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .lc-name{
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .badge{
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink:0;
+  }
+  .badge-green{ background: rgba(61,220,132,0.15); color: var(--green); }
+  .badge-yellow{ background: rgba(245,197,66,0.15); color: var(--yellow); }
+  .badge-red{ background: rgba(255,92,108,0.15); color: var(--red); }
+  .badge-grey{ background: rgba(90,97,128,0.2); color: var(--text-dim); }
+  .lc-meta{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .lc-meta-item .label{
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-faint);
+    margin-bottom: 2px;
+  }
+  .lc-meta-item .value{
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .value.warn-ok{ color: var(--green); }
+  .value.warn-mid{ color: var(--yellow); }
+  .value.warn-bad{ color: var(--red); }
+  .empty-state{
+    color: var(--text-dim);
+    font-size: 13.5px;
+    padding: 30px;
+    text-align:center;
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+  }
+  .report-layout{
+    display:grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px){
+    .report-layout{ grid-template-columns: 1fr; }
+  }
+  .form-card, .list-card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+  }
+  .form-card h3, .list-card h3{
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .field{ margin-bottom: 12px; }
+  .field label{
+    display:block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+  .field input, .field textarea{
+    width:100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 11px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13.5px;
+    resize: vertical;
+  }
+  .field input:focus, .field textarea:focus{
+    outline: none;
+    border-color: var(--accent2);
+    background: rgba(255,255,255,0.06);
+  }
+  .filter-row{
+    display:flex;
+    gap:8px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .filter-row .field{ flex:1; min-width:130px; margin-bottom:0; }
+  .report-item{
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .report-item .r-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom: 8px;
+  }
+  .report-item .r-name{ font-weight:700; font-size:13.5px; }
+  .report-item .r-date{ font-size:12px; color: var(--text-dim); }
+  .report-item .r-field{ font-size: 13px; margin-bottom:5px; }
+  .report-item .r-field b{ color: var(--text-dim); font-weight:600; }
+  .r-delete{
+    background:none;
+    border:none;
+    color: var(--red);
+    cursor:pointer;
+    font-size: 12px;
+    font-weight:600;
+    padding: 3px 6px;
+  }
+  .r-delete:hover{ text-decoration: underline; }
+  .toast{
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 11px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events:none;
+    transition: opacity .2s ease, transform .2s ease;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .toast.show{
+    opacity:1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>Кураторская панель — La Puerta</h1>
+      <div class="sub">EMS &amp; GOV · сроки полномочий лидеров фракций</div>
+    </div>
+    <div class="status-row">
+      <span class="status-dot" id="statusDot" data-state="loading">Подключение…</span>
+      <span id="lastUpdateText">—</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="leaders">Лидеры</button>
+    <button class="tab-btn" data-tab="ems">Отчёты EMS</button>
+    <button class="tab-btn" data-tab="gov">Отчёты GOV</button>
+  </div>
+
+  <section class="panel active" id="panel-leaders">
+    <div class="toolbar">
+      <div style="color:var(--text-dim); font-size:13px;">
+        Данные с форума · <span id="leaderCount">—</span> должностей отслеживается
+      </div>
+      <button class="btn btn-primary" id="refreshBtn">
+        <span class="spinner"></span>
+        <span class="btn-icon">↻</span>
+        <span>Обновить</span>
+      </button>
+    </div>
+
+    <div id="leadersRoot"></div>
+  </section>
+
+  <section class="panel" id="panel-ems">
+    <div class="report-layout">
+      <div class="form-card">
+        <h3>Новый отчёт EMS</h3>
+        <div class="field"><label>Имя лидера</label><input type="text" id="ems-name" placeholder="Никнейм"></div>
+        <div class="field"><label>Дата отчёта</label><input type="date" id="ems-date"></div>
+        <div class="field"><label>Основные проблемы</label><textarea id="ems-problems" rows="3"></textarea></div>
+        <div class="field"><label>Улучшения / достижения</label><textarea id="ems-improvements" rows="3"></textarea></div>
+        <div class="field"><label>Дополнительный комментарий</label><textarea id="ems-comment" rows="2"></textarea></div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('ems')">Сохранить отчёт</button>
+      </div>
+      <div class="list-card">
+        <h3>Сохранённые отчёты</h3>
+        <div class="filter-row">
+          <div class="field"><label>С</label><input type="date" id="ems-filter-start" onchange="renderReports('ems')"></div>
+          <div class="field"><label>По</label><input type="date" id="ems-filter-end" onchange="renderReports('ems')"></div>
+          <button class="btn" style="align-self:flex-end;" onclick="clearFilter('ems')">Сброс</button>
+        </div>
+        <div id="ems-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-gov">
+    <div class="report-layout">
+      <div class="form-card">
+        <h3>Новый отчёт GOV</h3>
+        <div class="field"><label>Имя лидера</label><input type="text" id="gov-name" placeholder="Никнейм"></div>
+        <div class="field"><label>Дата отчёта</label><input type="date" id="gov-date"></div>
+        <div class="field"><label>Основные проблемы</label><textarea id="gov-problems" rows="3"></textarea></div>
+        <div class="field"><label>Улучшения / достижения</label><textarea id="gov-improvements" rows="3"></textarea></div>
+        <div class="field"><label>Дополнительный комментарий</label><textarea id="gov-comment" rows="2"></textarea></div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('gov')">Сохранить отчёт</button>
+      </div>
+      <div class="list-card">
+        <h3>Сохранённые отчёты</h3>
+        <div class="filter-row">
+          <div class="field"><label>С</label><input type="date" id="gov-filter-start" onchange="renderReports('gov')"></div>
+          <div class="field"><label>По</label><input type="date" id="gov-filter-end" onchange="renderReports('gov')"></div>
+          <button class="btn" style="align-self:flex-end;" onclick="clearFilter('gov')">Сброс</button>
+        </div>
+        <div id="gov-list"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbxyybXqtVcpuKnmbbgXG_fRldZ3cO1GiIZtt_G8P3VENIdyoT3_jHNRbyokfjfvtzBn/exec';
+
+const FACTION_GROUPS = [
+  {
+    title: 'Исполнительная власть',
+    items: [
+      { key: 'GOV', label: 'Губернатор (GOV)', termDays: 45 }
+    ]
+  },
+  {
+    title: 'Судебная власть и прокуратура',
+    items: [
+      { key: 'Генеральный прокурор', label: 'Генеральный прокурор', termDays: 30, judicial: true },
+      { key: 'Председатель Верховного суда', label: 'Председатель Верховного суда', termDays: 30, judicial: true }
+    ]
+  },
+  {
+    title: 'Экстренная медицинская служба',
+    items: [
+      { key: 'EMS', label: 'EMS', termDays: 30 }
+    ]
+  },
+  {
+    title: 'Силовые структуры и другие фракции',
+    items: [
+      { key: 'FIB', label: 'FIB', termDays: 30 },
+      { key: 'LSPD', label: 'LSPD', termDays: 30 },
+      { key: 'LSSD', label: 'LSSD', termDays: 30 },
+      { key: 'NG', label: 'National Guard (NG)', termDays: 30 },
+      { key: 'SASPA', label: 'SASPA', termDays: 30 },
+      { key: 'WN', label: 'WN', termDays: 30 }
+    ]
+  },
+  {
+    title: 'Уличные группировки',
+    items: [
+      { key: 'MG-13', label: 'MG-13', termDays: 30 },
+      { key: 'Ballas', label: 'Ballas', termDays: 30 },
+      { key: 'Families', label: 'Families', termDays: 30 }
+    ]
+  },
+  {
+    title: 'Преступные синдикаты',
+    items: [
+      { key: 'AM', label: 'AM', termDays: 30 },
+      { key: 'RM', label: 'RM', termDays: 30 },
+      { key: 'MM', label: 'MM', termDays: 30 }
+    ]
+  }
+];
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=> t.classList.remove('show'), 2600);
+}
+
+function setStatus(state, label){
+  const dot = document.getElementById('statusDot');
+  dot.dataset.state = state;
+  dot.textContent = label;
+}
+
+function parseDate(str){
+  if (!str) return null;
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(str.trim());
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const month = parseInt(m[2], 10) - 1;
+  const year = parseInt(m[3], 10);
+  const d = new Date(year, month, day);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function daysLeftInfo(appointedDateStr, termDays, termText){
+  const d = parseDate(appointedDateStr);
+  if (!d) return { status: 'unknown', badgeClass: 'badge-grey', text: 'Дата уточняется' };
+
+  let termNumber = 1;
+  if (termText) {
+    const match = termText.match(/(\d+)-й\s*срок/);
+    if (match) {
+      termNumber = parseInt(match[1], 10);
+    }
+  }
+
+  const totalDays = termNumber * termDays;
+  const deadline = new Date(d.getTime() + totalDays * 86400000);
+  
+  const now = new Date();
+  const diffDays = Math.ceil((deadline - now) / 86400000);
+
+  if (diffDays < 0) {
+    const daysOverdue = Math.abs(diffDays);
+    return { 
+      status: 'expired', 
+      badgeClass: 'badge-red', 
+      text: `Истёк ${daysOverdue} дн. назад`
+    };
+  }
+  if (diffDays <= 3) return { status: 'red', badgeClass: 'badge-red', text: `${diffDays} дн. осталось` };
+  if (diffDays <= 10) return { status: 'yellow', badgeClass: 'badge-yellow', text: `${diffDays} дн. осталось` };
+  return { status: 'green', badgeClass: 'badge-green', text: `${diffDays} дн. осталось` };
+}
+
+function warningsClass(warnStr){
+  const m = /^(\d+)\s*\/\s*(\d+)$/.exec((warnStr||'').trim());
+  if (!m) return '';
+  const n = parseInt(m[1], 10);
+  if (n <= 0) return 'warn-ok';
+  if (n === 1) return 'warn-mid';
+  return 'warn-bad';
+}
+
+let leaderData = null;
+
+function loadCachedLeaders(){
+  try{
+    const raw = localStorage.getItem('leaderData');
+    if (raw) leaderData = JSON.parse(raw);
+  }catch(e){}
+}
+
+async function fetchLeaders(force){
+  const btn = document.getElementById('refreshBtn');
+  if (force) btn.classList.add('loading');
+  setStatus('loading', force ? 'Обновление…' : 'Подключение…');
+
+  let url = '';
+
+  try{
+    const timestamp = new Date().getTime();
+    url = API_URL;
+    if (force) {
+      url += (url.includes('?') ? '&' : '?') + 'refresh=1&_=' + timestamp;
+    } else {
+      url += (url.includes('?') ? '&' : '?') + '_=' + timestamp;
+    }
+    
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+    
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (data && data.leaders){
+      leaderData = data.leaders;
+      localStorage.setItem('leaderData', JSON.stringify(leaderData));
+      localStorage.setItem('leaderDataTime', data.lastUpdate || new Date().toISOString());
+      setStatus(data.stale ? 'offline' : 'online', data.stale ? 'Устаревшие данные' : 'Онлайн');
+      if (data.stale) toast('Не удалось получить свежие данные, показан последний кэш');
+      else if (force) toast('Данные обновлены');
+    } else {
+      throw new Error('Пустой ответ API');
+    }
+  }catch(err){
+    console.error('ОШИБКА в fetchLeaders:', err);
+    setStatus('offline', 'Офлайн');
+    if (leaderData){
+      toast('Сервер недоступен — показаны сохранённые данные');
+    } else {
+      toast('Не удалось загрузить данные лидеров');
+    }
+  }finally{
+    btn.classList.remove('loading');
+    renderLeaders();
+    updateLastUpdateText();
+  }
+}
+
+function updateLastUpdateText(){
+  const t = localStorage.getItem('leaderDataTime');
+  const el = document.getElementById('lastUpdateText');
+  if (!t){ el.textContent = 'нет данных'; return; }
+  const d = new Date(t);
+  el.textContent = 'обновлено ' + d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function renderLeaders(){
+  const root = document.getElementById('leadersRoot');
+  root.innerHTML = '';
+
+  if (!leaderData){
+    root.innerHTML = '<div class="empty-state">Данные ещё не загружены. Нажмите «Обновить».</div>';
+    document.getElementById('leaderCount').textContent = '0';
+    return;
+  }
+
+  let total = 0;
+
+  FACTION_GROUPS.forEach(group => {
+    const groupEl = document.createElement('div');
+    groupEl.className = 'group';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'group-title';
+    titleEl.textContent = group.title;
+    groupEl.appendChild(titleEl);
+
+    const grid = document.createElement('div');
+    grid.className = 'card-grid';
+
+    group.items.forEach(item => {
+      const entry = leaderData[item.key];
+      grid.appendChild(renderCard(item, entry));
+      total++;
+    });
+
+    groupEl.appendChild(grid);
+    root.appendChild(groupEl);
+  });
+
+  document.getElementById('leaderCount').textContent = total;
+}
+
+function renderCard(item, entry){
+  const card = document.createElement('div');
+  card.className = 'leader-card';
+
+  if (!entry){
+    card.dataset.status = 'unknown';
+    card.innerHTML = `
+      <div class="lc-top">
+        <div><div class="lc-faction">${item.label}</div><div class="lc-name">Нет данных</div></div>
+        <span class="badge badge-grey">—</span>
+      </div>`;
+    return card;
+  }
+
+  const isVacant = !entry.nickname || entry.nickname.trim() === '-';
+  let info;
+  if (isVacant){
+    info = { status: 'vacant', badgeClass: 'badge-grey', text: 'Вакантно' };
+  } else {
+    info = daysLeftInfo(entry.appointedDate, item.termDays, entry.term);
+  }
+
+  card.dataset.status = info.status;
+
+  const metaItems = [];
+  metaItems.push(`<div class="lc-meta-item"><div class="label">Назначен</div><div class="value">${entry.appointedDate || '—'}</div></div>`);
+  metaItems.push(`<div class="lc-meta-item"><div class="label">Срок полномочий</div><div class="value">${entry.term || '—'}</div></div>`);
+
+  if (item.judicial){
+    const wcls = warningsClass(entry.warnings);
+    metaItems.push(`<div class="lc-meta-item"><div class="label">Предупреждения</div><div class="value ${wcls}">${entry.warnings ?? '—'}</div></div>`);
+  } else {
+    metaItems.push(`<div class="lc-meta-item"><div class="label">Баллы</div><div class="value">${entry.points ?? '—'}</div></div>`);
+  }
+  metaItems.push(`<div class="lc-meta-item"><div class="label">Осталось дней</div><div class="value">${item.termDays}</div></div>`);
+
+  card.innerHTML = `
+    <div class="lc-top">
+      <div>
+        <div class="lc-faction">${item.label}</div>
+        <div class="lc-name">${isVacant ? 'Должность не занята' : entry.nickname}</div>
+      </div>
+      <span class="badge ${info.badgeClass}">${info.text}</span>
+    </div>
+    <div class="lc-meta">${metaItems.join('')}</div>
+  `;
+
+  return card;
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+document.getElementById('refreshBtn').addEventListener('click', () => fetchLeaders(true));
+
+function reportsKey(type){ return type === 'ems' ? 'emsReports' : 'govReports'; }
+
+function getReports(type){
+  try{
+    return JSON.parse(localStorage.getItem(reportsKey(type)) || '[]');
+  }catch(e){ return []; }
+}
+
+function setReports(type, arr){
+  localStorage.setItem(reportsKey(type), JSON.stringify(arr));
+}
+
+function saveReport(type){
+  const name = document.getElementById(`${type}-name`).value.trim();
+  const date = document.getElementById(`${type}-date`).value;
+  const problems = document.getElementById(`${type}-problems`).value.trim();
+  const improvements = document.getElementById(`${type}-improvements`).value.trim();
+  const comment = document.getElementById(`${type}-comment`).value.trim();
+
+  if (!name || !date){
+    toast('Заполните имя лидера и дату отчёта');
+    return;
+  }
+
+  const reports = getReports(type);
+  reports.unshift({
+    id: Date.now(),
+    name, date, problems, improvements, comment
+  });
+  setReports(type, reports);
+
+  ['name','date','problems','improvements','comment'].forEach(f => {
+    document.getElementById(`${type}-${f}`).value = '';
+  });
+
+  toast('Отчёт сохранён');
+  renderReports(type);
+}
+
+function deleteReport(type, id){
+  const reports = getReports(type).filter(r => r.id !== id);
+  setReports(type, reports);
+  renderReports(type);
+  toast('Отчёт удалён');
+}
+
+function clearFilter(type){
+  document.getElementById(`${type}-filter-start`).value = '';
+  document.getElementById(`${type}-filter-end`).value = '';
+  renderReports(type);
+}
+
+function renderReports(type){
+  const list = document.getElementById(`${type}-list`);
+  const start = document.getElementById(`${type}-filter-start`).value;
+  const end = document.getElementById(`${type}-filter-end`).value;
+
+  let reports = getReports(type);
+  if (start) reports = reports.filter(r => r.date >= start);
+  if (end) reports = reports.filter(r => r.date <= end);
+
+  if (reports.length === 0){
+    list.innerHTML = '<div class="empty-state">Отчётов пока нет</div>';
+    return;
+  }
+
+  list.innerHTML = reports.map(r => `
+    <div class="report-item">
+      <div class="r-top">
+        <div>
+          <div class="r-name">${escapeHtml(r.name)}</div>
+          <div class="r-date">${r.date}</div>
+        </div>
+        <button class="r-delete" onclick="deleteReport('${type}', ${r.id})">Удалить</button>
+      </div>
+      ${r.problems ? `<div class="r-field"><b>Проблемы:</b> ${escapeHtml(r.problems)}</div>` : ''}
+      ${r.improvements ? `<div class="r-field"><b>Улучшения:</b> ${escapeHtml(r.improvements)}</div>` : ''}
+      ${r.comment ? `<div class="r-field"><b>Комментарий:</b> ${escapeHtml(r.comment)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+loadCachedLeaders();
+renderLeaders();
+updateLastUpdateText();
+renderReports('ems');
+renderReports('gov');
+fetchLeaders(false);
+</script>
+</body>
+</html>

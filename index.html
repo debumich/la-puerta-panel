@@ -51,20 +51,11 @@
     justify-content:space-between;
     margin-bottom: 26px;
   }
-  .brand{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-  }
   .brand h1{
     margin:0;
     font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.01em;
-  }
-  .brand .sub{
-    color: var(--text-dim);
-    font-size: 13px;
   }
   .status-row{
     display:flex;
@@ -101,6 +92,7 @@
     border-radius: 12px;
     width: fit-content;
     margin-bottom: 22px;
+    flex-wrap: wrap;
   }
   .tab-btn{
     appearance:none;
@@ -288,7 +280,7 @@
     color: var(--text-dim);
     margin-bottom: 5px;
   }
-  .field input, .field textarea{
+  .field input, .field textarea, .field select{
     width:100%;
     background: rgba(255,255,255,0.04);
     border: 1px solid var(--border);
@@ -299,11 +291,12 @@
     font-size: 13.5px;
     resize: vertical;
   }
-  .field input:focus, .field textarea:focus{
+  .field input:focus, .field textarea:focus, .field select:focus{
     outline: none;
     border-color: var(--accent2);
     background: rgba(255,255,255,0.06);
   }
+  .field select option{ background: #0d1226; }
   .filter-row{
     display:flex;
     gap:8px;
@@ -359,16 +352,59 @@
     opacity:1;
     transform: translateX(-50%) translateY(0);
   }
+
+  /* настройки */
+  .settings-panel{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+  .settings-panel .field{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:12px;
+  }
+  .settings-panel .field label{
+    margin-bottom:0;
+    min-width:140px;
+  }
+  .settings-panel .field select{
+    flex:1;
+    min-width:200px;
+  }
+  .settings-panel .field .btn{
+    flex-shrink:0;
+  }
+  .chip-group{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .chip{
+    background: var(--card-hover);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:4px 12px;
+    font-size:12px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .chip .remove{
+    cursor:pointer;
+    color: var(--red);
+    font-weight:700;
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header>
-    <div class="brand">
-      <h1>Кураторская панель — La Puerta</h1>
-      <div class="sub">EMS &amp; GOV · сроки полномочий лидеров фракций</div>
-    </div>
+    <div class="brand"><h1>Кураторская панель — La Puerta</h1></div>
     <div class="status-row">
       <span class="status-dot" id="statusDot" data-state="loading">Подключение…</span>
       <span id="lastUpdateText">—</span>
@@ -377,10 +413,12 @@
 
   <div class="tabs">
     <button class="tab-btn active" data-tab="leaders">Лидеры</button>
-    <button class="tab-btn" data-tab="ems">Отчёты EMS</button>
-    <button class="tab-btn" data-tab="gov">Отчёты GOV</button>
+    <button class="tab-btn" data-tab="reports-gov">Гос. отчёты</button>
+    <button class="tab-btn" data-tab="reports-crime">Крим. отчёты</button>
+    <button class="tab-btn" data-tab="settings">Настройки</button>
   </div>
 
+  <!-- ========= ЛИДЕРЫ ========= -->
   <section class="panel active" id="panel-leaders">
     <div class="toolbar">
       <div style="color:var(--text-dim); font-size:13px;">
@@ -392,43 +430,35 @@
         <span>Обновить</span>
       </button>
     </div>
-
     <div id="leadersRoot"></div>
   </section>
 
-  <section class="panel" id="panel-ems">
+  <!-- ========= ГОС. ОТЧЁТЫ ========= -->
+  <section class="panel" id="panel-reports-gov">
     <div class="report-layout">
       <div class="form-card">
-        <h3>Новый отчёт EMS</h3>
-        <div class="field"><label>Имя лидера</label><input type="text" id="ems-name" placeholder="Никнейм"></div>
-        <div class="field"><label>Дата отчёта</label><input type="date" id="ems-date"></div>
-        <div class="field"><label>Основные проблемы</label><textarea id="ems-problems" rows="3"></textarea></div>
-        <div class="field"><label>Улучшения / достижения</label><textarea id="ems-improvements" rows="3"></textarea></div>
-        <div class="field"><label>Дополнительный комментарий</label><textarea id="ems-comment" rows="2"></textarea></div>
-        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('ems')">Сохранить отчёт</button>
-      </div>
-      <div class="list-card">
-        <h3>Сохранённые отчёты</h3>
-        <div class="filter-row">
-          <div class="field"><label>С</label><input type="date" id="ems-filter-start" onchange="renderReports('ems')"></div>
-          <div class="field"><label>По</label><input type="date" id="ems-filter-end" onchange="renderReports('ems')"></div>
-          <button class="btn" style="align-self:flex-end;" onclick="clearFilter('ems')">Сброс</button>
+        <h3>Новый отчёт (гос. фракция)</h3>
+        <div class="field">
+          <label>Фракция</label>
+          <select id="reportGovFaction">
+            <option value="GOV">GOV</option>
+            <option value="Генеральный прокурор">Генеральный прокурор</option>
+            <option value="Председатель Верховного суда">Председатель Верховного суда</option>
+            <option value="FIB">FIB</option>
+            <option value="LSPD">LSPD</option>
+            <option value="LSSD">LSSD</option>
+            <option value="NG">NG</option>
+            <option value="SASPA">SASPA</option>
+            <option value="EMS">EMS</option>
+            <option value="WN">WN</option>
+          </select>
         </div>
-        <div id="ems-list"></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="panel-gov">
-    <div class="report-layout">
-      <div class="form-card">
-        <h3>Новый отчёт GOV</h3>
-        <div class="field"><label>Имя лидера</label><input type="text" id="gov-name" placeholder="Никнейм"></div>
-        <div class="field"><label>Дата отчёта</label><input type="date" id="gov-date"></div>
-        <div class="field"><label>Основные проблемы</label><textarea id="gov-problems" rows="3"></textarea></div>
-        <div class="field"><label>Улучшения / достижения</label><textarea id="gov-improvements" rows="3"></textarea></div>
-        <div class="field"><label>Дополнительный комментарий</label><textarea id="gov-comment" rows="2"></textarea></div>
-        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('gov')">Сохранить отчёт</button>
+        <div class="field"><label>Имя лидера</label><input type="text" id="reportGovName" placeholder="Никнейм"></div>
+        <div class="field"><label>Дата отчёта</label><input type="date" id="reportGovDate"></div>
+        <div class="field"><label>Основные проблемы</label><textarea id="reportGovProblems" rows="3"></textarea></div>
+        <div class="field"><label>Улучшения / достижения</label><textarea id="reportGovImprovements" rows="3"></textarea></div>
+        <div class="field"><label>Доп. комментарий</label><textarea id="reportGovComment" rows="2"></textarea></div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('gov')">Сохранить</button>
       </div>
       <div class="list-card">
         <h3>Сохранённые отчёты</h3>
@@ -442,63 +472,106 @@
     </div>
   </section>
 
+  <!-- ========= КРИМ. ОТЧЁТЫ ========= -->
+  <section class="panel" id="panel-reports-crime">
+    <div class="report-layout">
+      <div class="form-card">
+        <h3>Новый отчёт (крим. фракция)</h3>
+        <div class="field">
+          <label>Фракция</label>
+          <select id="reportCrimeFaction">
+            <option value="MG-13">MG-13</option>
+            <option value="Ballas">Ballas</option>
+            <option value="Families">Families</option>
+            <option value="AM">AM</option>
+            <option value="RM">RM</option>
+            <option value="MM">MM</option>
+          </select>
+        </div>
+        <div class="field"><label>Имя лидера</label><input type="text" id="reportCrimeName" placeholder="Никнейм"></div>
+        <div class="field"><label>Дата отчёта</label><input type="date" id="reportCrimeDate"></div>
+        <div class="field"><label>Основные проблемы</label><textarea id="reportCrimeProblems" rows="3"></textarea></div>
+        <div class="field"><label>Улучшения / достижения</label><textarea id="reportCrimeImprovements" rows="3"></textarea></div>
+        <div class="field"><label>Доп. комментарий</label><textarea id="reportCrimeComment" rows="2"></textarea></div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="saveReport('crime')">Сохранить</button>
+      </div>
+      <div class="list-card">
+        <h3>Сохранённые отчёты</h3>
+        <div class="filter-row">
+          <div class="field"><label>С</label><input type="date" id="crime-filter-start" onchange="renderReports('crime')"></div>
+          <div class="field"><label>По</label><input type="date" id="crime-filter-end" onchange="renderReports('crime')"></div>
+          <button class="btn" style="align-self:flex-end;" onclick="clearFilter('crime')">Сброс</button>
+        </div>
+        <div id="crime-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========= НАСТРОЙКИ ========= -->
+  <section class="panel" id="panel-settings">
+    <div class="settings-panel">
+      <h3 style="margin-top:0;">Мои курируемые фракции</h3>
+      <p style="color:var(--text-dim); font-size:13px;">Выберите фракции, которые вы курируете. Остальные будут скрыты из списка лидеров и отчётов.</p>
+      <div class="field">
+        <label>Фракции:</label>
+        <select id="factionSelector" multiple style="height:150px;">
+          <!-- заполняется скриптом -->
+        </select>
+        <div>
+          <button class="btn" onclick="addSelectedFactions()">➕ Добавить выбранные</button>
+          <button class="btn" onclick="clearMyFactions()">🗑️ Очистить все</button>
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label>Вы курируете:</label>
+        <div id="myFactionsChips" class="chip-group"></div>
+      </div>
+    </div>
+  </section>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// Используем публичный прокси для обхода CORS
+// ============================================================
+// НАСТРОЙКИ
+// ============================================================
 const API_URL = 'https://la-puerta-proxy.vercel.app/';
 
-const FACTION_GROUPS = [
-  {
-    title: 'Исполнительная власть',
-    items: [
-      { key: 'GOV', label: 'Губернатор (GOV)', termDays: 45 }
-    ]
-  },
-  {
-    title: 'Судебная власть и прокуратура',
-    items: [
-      { key: 'Генеральный прокурор', label: 'Генеральный прокурор', termDays: 30, judicial: true },
-      { key: 'Председатель Верховного суда', label: 'Председатель Верховного суда', termDays: 30, judicial: true }
-    ]
-  },
-  {
-    title: 'Экстренная медицинская служба',
-    items: [
-      { key: 'EMS', label: 'EMS', termDays: 30 }
-    ]
-  },
-  {
-    title: 'Силовые структуры и другие фракции',
-    items: [
-      { key: 'FIB', label: 'FIB', termDays: 30 },
-      { key: 'LSPD', label: 'LSPD', termDays: 30 },
-      { key: 'LSSD', label: 'LSSD', termDays: 30 },
-      { key: 'NG', label: 'National Guard (NG)', termDays: 30 },
-      { key: 'SASPA', label: 'SASPA', termDays: 30 },
-      { key: 'WN', label: 'WN', termDays: 30 }
-    ]
-  },
-  {
-    title: 'Уличные группировки',
-    items: [
-      { key: 'MG-13', label: 'MG-13', termDays: 30 },
-      { key: 'Ballas', label: 'Ballas', termDays: 30 },
-      { key: 'Families', label: 'Families', termDays: 30 }
-    ]
-  },
-  {
-    title: 'Преступные синдикаты',
-    items: [
-      { key: 'AM', label: 'AM', termDays: 30 },
-      { key: 'RM', label: 'RM', termDays: 30 },
-      { key: 'MM', label: 'MM', termDays: 30 }
-    ]
-  }
+// ВСЕ фракции с группировкой (для отображения)
+const ALL_FACTIONS = [
+  { key: 'GOV', label: 'GOV', group: 'Исполнительная власть' },
+  { key: 'Генеральный прокурор', label: 'Генеральный прокурор', group: 'Судебная власть' },
+  { key: 'Председатель Верховного суда', label: 'Председатель Верховного суда', group: 'Судебная власть' },
+  { key: 'FIB', label: 'FIB', group: 'Силовые структуры' },
+  { key: 'LSPD', label: 'LSPD', group: 'Силовые структуры' },
+  { key: 'LSSD', label: 'LSSD', group: 'Силовые структуры' },
+  { key: 'NG', label: 'NG', group: 'Силовые структуры' },
+  { key: 'SASPA', label: 'SASPA', group: 'Силовые структуры' },
+  { key: 'EMS', label: 'EMS', group: 'Силовые структуры' },
+  { key: 'WN', label: 'WN', group: 'Силовые структуры' },
+  { key: 'MG-13', label: 'MG-13', group: 'Уличные группировки' },
+  { key: 'Ballas', label: 'Ballas', group: 'Уличные группировки' },
+  { key: 'Families', label: 'Families', group: 'Уличные группировки' },
+  { key: 'AM', label: 'AM', group: 'Преступные синдикаты' },
+  { key: 'RM', label: 'RM', group: 'Преступные синдикаты' },
+  { key: 'MM', label: 'MM', group: 'Преступные синдикаты' }
 ];
 
+// Группировка для отображения (собираем динамически)
+function getFactionGroups() {
+  const groups = {};
+  ALL_FACTIONS.forEach(f => {
+    if (!groups[f.group]) groups[f.group] = [];
+    groups[f.group].push(f);
+  });
+  return groups;
+}
+
+// ============================================================
+// УТИЛИТЫ
+// ============================================================
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -531,24 +604,16 @@ function daysLeftInfo(appointedDateStr, termDays, termText){
   let termNumber = 1;
   if (termText) {
     const match = termText.match(/(\d+)-й\s*срок/);
-    if (match) {
-      termNumber = parseInt(match[1], 10);
-    }
+    if (match) termNumber = parseInt(match[1], 10);
   }
-
   const totalDays = termNumber * termDays;
   const deadline = new Date(d.getTime() + totalDays * 86400000);
-  
   const now = new Date();
   const diffDays = Math.ceil((deadline - now) / 86400000);
 
   if (diffDays < 0) {
     const daysOverdue = Math.abs(diffDays);
-    return { 
-      status: 'expired', 
-      badgeClass: 'badge-red', 
-      text: `Истёк ${daysOverdue} дн. назад`
-    };
+    return { status: 'expired', badgeClass: 'badge-red', text: `Истёк ${daysOverdue} дн. назад` };
   }
   if (diffDays <= 3) return { status: 'red', badgeClass: 'badge-red', text: `${diffDays} дн. осталось` };
   if (diffDays <= 10) return { status: 'yellow', badgeClass: 'badge-yellow', text: `${diffDays} дн. осталось` };
@@ -564,6 +629,70 @@ function warningsClass(warnStr){
   return 'warn-bad';
 }
 
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ============================================================
+// НАСТРОЙКИ ПОЛЬЗОВАТЕЛЯ (курируемые фракции)
+// ============================================================
+function getMyFactions(){
+  try{
+    const raw = localStorage.getItem('myFactions');
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function setMyFactions(arr){
+  localStorage.setItem('myFactions', JSON.stringify(arr));
+  renderMyFactionsChips();
+  renderLeaders(); // перерисовываем лидеров
+  renderReports('gov');
+  renderReports('crime');
+}
+
+function addSelectedFactions(){
+  const sel = document.getElementById('factionSelector');
+  const selected = Array.from(sel.selectedOptions).map(o => o.value);
+  const current = getMyFactions();
+  const newSet = new Set([...current, ...selected]);
+  setMyFactions(Array.from(newSet));
+  toast('Фракции добавлены');
+}
+
+function clearMyFactions(){
+  setMyFactions([]);
+  toast('Список очищен');
+}
+
+function renderMyFactionsChips(){
+  const container = document.getElementById('myFactionsChips');
+  const list = getMyFactions();
+  if (list.length === 0) {
+    container.innerHTML = '<span style="color:var(--text-dim); font-size:13px;">Вы не выбрали ни одной фракции. Отображаются все.</span>';
+    return;
+  }
+  container.innerHTML = list.map(f => `
+    <span class="chip">${ALL_FACTIONS.find(a => a.key === f)?.label || f} <span class="remove" onclick="removeMyFaction('${f}')">✕</span></span>
+  `).join('');
+}
+
+function removeMyFaction(f){
+  const current = getMyFactions().filter(x => x !== f);
+  setMyFactions(current);
+  toast('Фракция удалена');
+}
+
+function initFactionSelector(){
+  const sel = document.getElementById('factionSelector');
+  sel.innerHTML = ALL_FACTIONS.map(f => `<option value="${f.key}">${f.label} (${f.group})</option>`).join('');
+}
+
+// ============================================================
+// ЗАГРУЗКА ДАННЫХ ЛИДЕРОВ
+// ============================================================
 let leaderData = null;
 
 function loadCachedLeaders(){
@@ -579,28 +708,12 @@ async function fetchLeaders(force){
   setStatus('loading', force ? 'Обновление…' : 'Подключение…');
 
   let url = '';
-
   try{
     const timestamp = new Date().getTime();
-    url = API_URL;
-    if (force) {
-      url += (url.includes('?') ? '&' : '?') + 'refresh=1&_=' + timestamp;
-    } else {
-      url += (url.includes('?') ? '&' : '?') + '_=' + timestamp;
-    }
-    
-    const res = await fetch(url, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
-    
+    url = API_URL + (API_URL.includes('?')?'&':'?') + (force?'refresh=1&':'') + '_=' + timestamp;
+    const res = await fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' } });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-
     if (data && data.leaders){
       leaderData = data.leaders;
       localStorage.setItem('leaderData', JSON.stringify(leaderData));
@@ -608,17 +721,12 @@ async function fetchLeaders(force){
       setStatus(data.stale ? 'offline' : 'online', data.stale ? 'Устаревшие данные' : 'Онлайн');
       if (data.stale) toast('Не удалось получить свежие данные, показан последний кэш');
       else if (force) toast('Данные обновлены');
-    } else {
-      throw new Error('Пустой ответ API');
-    }
+    } else throw new Error('Пустой ответ API');
   }catch(err){
-    console.error('ОШИБКА в fetchLeaders:', err);
+    console.error(err);
     setStatus('offline', 'Офлайн');
-    if (leaderData){
-      toast('Сервер недоступен — показаны сохранённые данные');
-    } else {
-      toast('Не удалось загрузить данные лидеров');
-    }
+    if (leaderData) toast('Сервер недоступен — показаны сохранённые данные');
+    else toast('Не удалось загрузить данные лидеров');
   }finally{
     btn.classList.remove('loading');
     renderLeaders();
@@ -634,44 +742,48 @@ function updateLastUpdateText(){
   el.textContent = 'обновлено ' + d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
 }
 
+// ============================================================
+// ОТРИСОВКА ЛИДЕРОВ
+// ============================================================
 function renderLeaders(){
   const root = document.getElementById('leadersRoot');
   root.innerHTML = '';
-
   if (!leaderData){
     root.innerHTML = '<div class="empty-state">Данные ещё не загружены. Нажмите «Обновить».</div>';
     document.getElementById('leaderCount').textContent = '0';
     return;
   }
 
+  const myFactions = getMyFactions();
+  const groups = getFactionGroups();
   let total = 0;
 
-  FACTION_GROUPS.forEach(group => {
+  for (const [groupName, factions] of Object.entries(groups)) {
+    // фильтруем по курируемым, если выбраны
+    const filtered = myFactions.length ? factions.filter(f => myFactions.includes(f.key)) : factions;
+    if (filtered.length === 0) continue;
+
     const groupEl = document.createElement('div');
     groupEl.className = 'group';
-
     const titleEl = document.createElement('div');
     titleEl.className = 'group-title';
-    titleEl.textContent = group.title;
+    titleEl.textContent = groupName;
     groupEl.appendChild(titleEl);
 
     const grid = document.createElement('div');
     grid.className = 'card-grid';
-
-    group.items.forEach(item => {
-      const entry = leaderData[item.key];
-      grid.appendChild(renderCard(item, entry));
+    filtered.forEach(f => {
+      const entry = leaderData[f.key];
+      grid.appendChild(renderCard(f, entry));
       total++;
     });
-
     groupEl.appendChild(grid);
     root.appendChild(groupEl);
-  });
-
+  }
   document.getElementById('leaderCount').textContent = total;
 }
 
-function renderCard(item, entry){
+function renderCard(faction, entry){
   const card = document.createElement('div');
   card.className = 'leader-card';
 
@@ -679,7 +791,7 @@ function renderCard(item, entry){
     card.dataset.status = 'unknown';
     card.innerHTML = `
       <div class="lc-top">
-        <div><div class="lc-faction">${item.label}</div><div class="lc-name">Нет данных</div></div>
+        <div><div class="lc-faction">${faction.label}</div><div class="lc-name">Нет данных</div></div>
         <span class="badge badge-grey">—</span>
       </div>`;
     return card;
@@ -688,30 +800,29 @@ function renderCard(item, entry){
   const isVacant = !entry.nickname || entry.nickname.trim() === '-';
   let info;
   if (isVacant){
-    info = { status: 'vacant', badgeClass: 'badge-grey', text: 'Вакантно' };
+    info = { status: 'vacant', badgeClass: 'badge-grey', text: 'Не назначен' };
   } else {
-    info = daysLeftInfo(entry.appointedDate, item.termDays, entry.term);
+    info = daysLeftInfo(entry.appointedDate, 30, entry.term);
   }
 
   card.dataset.status = info.status;
 
   const metaItems = [];
   metaItems.push(`<div class="lc-meta-item"><div class="label">Назначен</div><div class="value">${entry.appointedDate || '—'}</div></div>`);
-  metaItems.push(`<div class="lc-meta-item"><div class="label">Срок полномочий</div><div class="value">${entry.term || '—'}</div></div>`);
+  metaItems.push(`<div class="lc-meta-item"><div class="label">Текущий срок</div><div class="value">${entry.term || '—'}</div></div>`);
 
-  if (item.judicial){
+  if (faction.judicial){
     const wcls = warningsClass(entry.warnings);
     metaItems.push(`<div class="lc-meta-item"><div class="label">Предупреждения</div><div class="value ${wcls}">${entry.warnings ?? '—'}</div></div>`);
   } else {
     metaItems.push(`<div class="lc-meta-item"><div class="label">Баллы</div><div class="value">${entry.points ?? '—'}</div></div>`);
   }
-  metaItems.push(`<div class="lc-meta-item"><div class="label">Осталось дней</div><div class="value">${item.termDays}</div></div>`);
 
   card.innerHTML = `
     <div class="lc-top">
       <div>
-        <div class="lc-faction">${item.label}</div>
-        <div class="lc-name">${isVacant ? 'Должность не занята' : entry.nickname}</div>
+        <div class="lc-faction">${faction.label}</div>
+        <div class="lc-name">${isVacant ? 'Лидер не назначен' : entry.nickname}</div>
       </div>
       <span class="badge ${info.badgeClass}">${info.text}</span>
     </div>
@@ -721,18 +832,10 @@ function renderCard(item, entry){
   return card;
 }
 
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-  });
-});
-
-document.getElementById('refreshBtn').addEventListener('click', () => fetchLeaders(true));
-
-function reportsKey(type){ return type === 'ems' ? 'emsReports' : 'govReports'; }
+// ============================================================
+// ОТЧЁТЫ
+// ============================================================
+function reportsKey(type){ return type === 'gov' ? 'govReports' : 'crimeReports'; }
 
 function getReports(type){
   try{
@@ -745,26 +848,34 @@ function setReports(type, arr){
 }
 
 function saveReport(type){
-  const name = document.getElementById(`${type}-name`).value.trim();
-  const date = document.getElementById(`${type}-date`).value;
-  const problems = document.getElementById(`${type}-problems`).value.trim();
-  const improvements = document.getElementById(`${type}-improvements`).value.trim();
-  const comment = document.getElementById(`${type}-comment`).value.trim();
+  const prefix = type === 'gov' ? 'reportGov' : 'reportCrime';
+  const faction = document.getElementById(prefix + 'Faction').value;
+  const name = document.getElementById(prefix + 'Name').value.trim();
+  const date = document.getElementById(prefix + 'Date').value;
+  const problems = document.getElementById(prefix + 'Problems').value.trim();
+  const improvements = document.getElementById(prefix + 'Improvements').value.trim();
+  const comment = document.getElementById(prefix + 'Comment').value.trim();
 
-  if (!name || !date){
-    toast('Заполните имя лидера и дату отчёта');
+  if (!faction || !name || !date){
+    toast('Заполните фракцию, имя лидера и дату');
     return;
   }
 
   const reports = getReports(type);
   reports.unshift({
     id: Date.now(),
-    name, date, problems, improvements, comment
+    faction,
+    name,
+    date,
+    problems,
+    improvements,
+    comment
   });
   setReports(type, reports);
 
-  ['name','date','problems','improvements','comment'].forEach(f => {
-    document.getElementById(`${type}-${f}`).value = '';
+  // очистка полей
+  [faction,'Name','Date','Problems','Improvements','Comment'].forEach(f => {
+    document.getElementById(prefix + f).value = '';
   });
 
   toast('Отчёт сохранён');
@@ -793,6 +904,12 @@ function renderReports(type){
   if (start) reports = reports.filter(r => r.date >= start);
   if (end) reports = reports.filter(r => r.date <= end);
 
+  // фильтр по курируемым фракциям
+  const myFactions = getMyFactions();
+  if (myFactions.length) {
+    reports = reports.filter(r => myFactions.includes(r.faction));
+  }
+
   if (reports.length === 0){
     list.innerHTML = '<div class="empty-state">Отчётов пока нет</div>';
     return;
@@ -802,7 +919,7 @@ function renderReports(type){
     <div class="report-item">
       <div class="r-top">
         <div>
-          <div class="r-name">${escapeHtml(r.name)}</div>
+          <div class="r-name">${escapeHtml(r.name)} (${escapeHtml(r.faction)})</div>
           <div class="r-date">${r.date}</div>
         </div>
         <button class="r-delete" onclick="deleteReport('${type}', ${r.id})">Удалить</button>
@@ -814,17 +931,33 @@ function renderReports(type){
   `).join('');
 }
 
-function escapeHtml(str){
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
+// ============================================================
+// ВКЛАДКИ
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
 
+document.getElementById('refreshBtn').addEventListener('click', () => fetchLeaders(true));
+
+// ============================================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================================
 loadCachedLeaders();
 renderLeaders();
 updateLastUpdateText();
-renderReports('ems');
+
+renderMyFactionsChips();
+initFactionSelector();
+
 renderReports('gov');
+renderReports('crime');
+
 fetchLeaders(false);
 </script>
 </body>

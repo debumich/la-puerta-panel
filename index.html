@@ -75,7 +75,6 @@
   .glow-dot:nth-child(2){ width:400px; height:400px; background:var(--accent2); bottom:-150px; right:-150px; }
   .glow-dot:nth-child(3){ width:200px; height:200px; background:#f5c542; top:40%; left:60%; opacity:0.15; }
 
-  /* ===== НОВАЯ ШАПКА ===== */
   .header{
     background: var(--card);
     backdrop-filter: blur(12px);
@@ -257,7 +256,6 @@
     display:none;
   }
   .btn.loading .spinner{ display:inline-block; }
-  .btn.loading .btn-icon{ display:none; }
   @keyframes spin{ to{ transform: rotate(360deg); } }
 
   .group{ margin-bottom: 30px; }
@@ -470,7 +468,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 18px 20px;
-    min-height: 420px;
+    min-height: 450px;
     display: flex;
     flex-direction: column;
   }
@@ -624,7 +622,6 @@
 
 <div class="wrap">
 
-  <!-- НОВАЯ ШАПКА -->
   <header class="header">
     <div class="header-left">
       <img src="/Header.png" alt="La Puerta" class="header-logo">
@@ -838,6 +835,14 @@ function setMyFactions(arr){
   updateCounter();
 }
 
+function getDisplayFactions(){
+  const list = getMyFactions();
+  const hasAllGov = GOV_KEYS.every(k => list.includes(k));
+  const filtered = list.filter(k => !GOV_KEYS.includes(k));
+  if (hasAllGov) filtered.push('GOV');
+  return filtered;
+}
+
 function toggleFactionSingle(key){
   const current = getMyFactions();
   const idx = current.indexOf(key);
@@ -922,23 +927,29 @@ function renderFactionToggles(){
 
 function renderMyFactionsChips(){
   const container = document.getElementById('myFactionsChips');
-  const list = getMyFactions();
-  if (list.length === 0) {
+  const display = getDisplayFactions();
+  if (display.length === 0) {
     container.innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции</span>';
     return;
   }
-  const hasAllGov = GOV_KEYS.every(k => list.includes(k));
-  const filtered = list.filter(k => !GOV_KEYS.includes(k));
-  if (hasAllGov) filtered.push('GOV');
-  container.innerHTML = filtered.map(f => {
-    let display = f;
-    if (f === 'GOV') display = 'GOV';
-    return `<span class="chip">${display} <span class="remove" onclick="toggleFactionSingle('${f === 'GOV' ? GOV_KEYS[0] : f}')">✕</span></span>`;
+  container.innerHTML = display.map(f => {
+    if (f === 'GOV') {
+      return `<span class="chip">GOV <span class="remove" onclick="removeGov()">✕</span></span>`;
+    } else {
+      return `<span class="chip">${f} <span class="remove" onclick="toggleFactionSingle('${f}')">✕</span></span>`;
+    }
   }).join('');
 }
 
+function removeGov(){
+  const current = getMyFactions();
+  const newArr = current.filter(k => !GOV_KEYS.includes(k));
+  setMyFactions(newArr);
+  toast('GOV удалён');
+}
+
 function updateCounter(){
-  const count = getMyFactions().length;
+  const count = getDisplayFactions().length;
   document.getElementById('selectedCounter').textContent = `Выбрано: ${count}`;
 }
 

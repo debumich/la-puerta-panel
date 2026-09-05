@@ -1,0 +1,277 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function userPath() {
+      return /databases/$(database)/documents/users/$(uid());
+    }
+
+    function hasUserDoc() {
+      return signedIn() && exists(userPath());
+    }
+
+    function me() {
+      return get(userPath()).data;
+    }
+
+    function isActive() {
+      return hasUserDoc() && me().active == true;
+    }
+
+    function myRole() {
+      return me().systemRole;
+    }
+
+    function isSiteAdmin() {
+      return isActive() && myRole() == 'site_admin';
+    }
+
+    function isStaff() {
+      return isActive() && myRole() in ['curator_assistant', 'curator', 'server_admin'];
+    }
+
+    function isLeader() {
+      return isActive() && myRole() == 'leader' && me().faction is string && me().faction.size() > 0;
+    }
+
+    function myFaction() {
+      return me().faction;
+    }
+
+    function curated() {
+      return me().curatedFactions;
+    }
+
+    function curates(f) {
+      return isStaff() && f in curated();
+    }
+
+    function hasPerm(p) {
+      return isStaff() && p in me().permissions;
+    }
+
+    function changedOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    function isShortString(v, max) {
+      return v is string && v.size() <= max;
+    }
+
+    function isStringOrNull(v) {
+      return v == null || v is string;
+    }
+
+    function validRole(r) {
+      return r in ['user', 'leader', 'curator_assistant', 'curator', 'server_admin', 'site_admin'];
+    }
+
+    function validLevel(n) {
+      return n is int && n >= 1 && n <= 6;
+    }
+
+    match /users/{userId} {
+      allow get: if signedIn() && (
+        uid() == userId
+        || isSiteAdmin()
+        || (isStaff() && resource.data.faction in curated())
+      );
+      allow list: if isSiteAdmin()
+        || (isStaff() && resource.data.faction in curated());
+
+      allow create: if signedIn()
+        && userId == uid()
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'displayName', 'avatarUrl', 'serverLevel', 'systemRole', 'faction', 'curatedFactions', 'permissions', 'reportEditingEnabled', 'active', 'createdAt', 'updatedAt'])
+        && request.resource.data.uid == uid()
+        && request.resource.data.email == myEmail()
+        && isShortString(request.resource.data.displayName, 120)
+        && request.resource.data.avatarUrl == ''
+        && request.resource.data.serverLevel == 1
+        && request.resource.data.systemRole == 'user'
+        && request.resource.data.faction == null
+        && request.resource.data.curatedFactions.size() == 0
+        && request.resource.data.permissions.size() == 0
+        && request.resource.data.reportEditingEnabled == false
+        && request.resource.data.active == true;
+
+      allow update: if signedIn() && (
+        (
+          uid() == userId
+          && !isSiteAdmin()
+          && changedOnly(['avatarUrl', 'updatedAt'])
+          && isShortString(request.resource.data.avatarUrl, 2000)
+        )
+        || (
+          isSiteAdmin()
+          && uid() == userId
+          && changedOnly(['displayName', 'avatarUrl', 'updatedAt'])
+          && isShortString(request.resource.data.displayName, 120)
+          && isShortString(request.resource.data.avatarUrl, 2000)
+        )
+        || (
+          isSiteAdmin()
+          && uid() != userId
+          && changedOnly(['displayName', 'avatarUrl', 'serverLevel', 'systemRole', 'faction', 'curatedFactions', 'permissions', 'reportEditingEnabled', 'active', 'updatedAt'])
+          && isShortString(request.resource.data.displayName, 120)
+          && validLevel(request.resource.data.serverLevel)
+          && validRole(request.resource.data.systemRole)
+          && isStringOrNull(request.resource.data.faction)
+          && request.resource.data.curatedFactions is list
+          && request.resource.data.curatedFactions.size() <= 30
+          && request.resource.data.permissions is list
+          && request.resource.data.permissions.size() <= 20
+          && request.resource.data.reportEditingEnabled is bool
+          && request.resource.data.active is bool
+        )
+        || (
+          hasPerm('editLeaderNickname')
+          && uid() != userId
+          && resource.data.systemRole == 'leader'
+          && resource.data.faction in curated()
+          && changedOnly(['displayName', 'updatedAt'])
+          && isShortString(request.resource.data.displayName, 120)
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    match /factions/{factionId} {
+      allow get, list: if true;
+      allow create: if isSiteAdmin()
+        && factionId.matches('^[a-z0-9-]{1,60}$')
+        && isShortString(request.resource.data.name, 80)
+        && request.resource.data.name.size() > 0
+        && isShortString(request.resource.data.forumKey, 80)
+        && request.resource.data.category in ['gov', 'judicial', 'street', 'syndicate', 'other']
+        && request.resource.data.active is bool
+        && request.resource.data.createdBy == uid();
+      allow update: if isSiteAdmin()
+        && changedOnly(['name', 'forumKey', 'category', 'logoUrl', 'active', 'updatedAt'])
+        && isShortString(request.resource.data.name, 80)
+        && request.resource.data.name.size() > 0
+        && isShortString(request.resource.data.forumKey, 80)
+        && request.resource.data.category in ['gov', 'judicial', 'street', 'syndicate', 'other']
+        && isShortString(request.resource.data.logoUrl, 2000)
+        && request.resource.data.active is bool;
+      allow delete: if false;
+    }
+
+    match /leaderHistory/{entryId} {
+      allow get, list: if resource.data.deleted == false || isSiteAdmin();
+      allow create: if isSiteAdmin()
+        && request.resource.data.deleted == false
+        && request.resource.data.createdBy == uid()
+        && isShortString(request.resource.data.factionId, 60)
+        && isShortString(request.resource.data.factionName, 80)
+        && isShortString(request.resource.data.leader, 120)
+        && request.resource.data.leader.size() > 0
+        && isShortString(request.resource.data.startDate, 10)
+        && isShortString(request.resource.data.endDate, 10)
+        && isShortString(request.resource.data.result, 80)
+        && isShortString(request.resource.data.reason, 300)
+        && isShortString(request.resource.data.comment, 2000);
+      allow update: if isSiteAdmin()
+        && changedOnly(['factionId', 'factionName', 'leader', 'startDate', 'endDate', 'result', 'reason', 'comment', 'deleted', 'deletedAt', 'deletedBy', 'deletedByEmail', 'deleteReason', 'restoredAt', 'restoredBy', 'updatedAt'])
+        && request.resource.data.deleted is bool
+        && isShortString(request.resource.data.leader, 120)
+        && isShortString(request.resource.data.reason, 300)
+        && isShortString(request.resource.data.comment, 2000);
+      allow delete: if false;
+    }
+
+    match /reports/{reportId} {
+      allow get, list: if isSiteAdmin()
+        || (
+          resource.data.deleted == false
+          && (
+            (isLeader() && resource.data.factionId == myFaction())
+            || (hasPerm('viewReports') && resource.data.factionId in curated())
+          )
+        );
+
+      allow create: if isActive()
+        && request.resource.data.authorId == uid()
+        && request.resource.data.authorEmail == myEmail()
+        && request.resource.data.deleted == false
+        && isShortString(request.resource.data.factionId, 60)
+        && isShortString(request.resource.data.factionName, 80)
+        && request.resource.data.side in ['gov', 'crime']
+        && isShortString(request.resource.data.leaderName, 120)
+        && request.resource.data.leaderName.size() > 0
+        && isShortString(request.resource.data.date, 10)
+        && isShortString(request.resource.data.problems, 5000)
+        && isShortString(request.resource.data.improvements, 5000)
+        && isShortString(request.resource.data.comment, 5000)
+        && isShortString(request.resource.data.authorNickname, 120)
+        && (
+          isSiteAdmin()
+          || (isLeader() && request.resource.data.factionId == myFaction())
+          || (hasPerm('manageReports') && request.resource.data.factionId in curated())
+        );
+
+      allow update: if (
+          isLeader()
+          && resource.data.authorId == uid()
+          && resource.data.deleted == false
+          && me().reportEditingEnabled == true
+          && changedOnly(['comment', 'editedAt', 'updatedAt'])
+          && isShortString(request.resource.data.comment, 5000)
+        )
+        || (
+          isSiteAdmin()
+          && changedOnly(['deleted', 'deletedAt', 'deletedBy', 'deletedByEmail', 'deleteReason', 'restoredAt', 'restoredBy', 'updatedAt'])
+          && request.resource.data.deleted is bool
+        );
+
+      allow delete: if false;
+    }
+
+    match /presence/{userId} {
+      allow get, list: if isActive();
+      allow create, update: if isActive()
+        && userId == uid()
+        && request.resource.data.keys().hasOnly(['uid', 'state', 'lastSeen'])
+        && request.resource.data.uid == uid()
+        && request.resource.data.state in ['online', 'away', 'offline'];
+      allow delete: if false;
+    }
+
+    match /auditLog/{entryId} {
+      allow get, list: if isSiteAdmin() || hasPerm('viewAudit');
+      allow create: if isActive()
+        && request.resource.data.userId == uid()
+        && request.resource.data.email == me().email
+        && request.resource.data.systemRole == myRole()
+        && request.resource.data.timestamp == request.time
+        && isShortString(request.resource.data.action, 300)
+        && isShortString(request.resource.data.objectType, 60);
+      allow update, delete: if false;
+    }
+
+    match /dataVersions/{versionId} {
+      allow get, list: if isSiteAdmin();
+      allow create: if (isSiteAdmin() || isStaff())
+        && request.resource.data.createdBy == uid()
+        && isShortString(request.resource.data.objectType, 60);
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

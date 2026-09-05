@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// ============================================================
+// La Puerta · Правила безопасности Firestore
+//
+// ЭТО — настоящая защита панели. Код на GitHub Pages публичный,
+// любой может открыть консоль и дёргать Firestore напрямую,
+// поэтому все права проверяются здесь, на сервере.
+//
+// ВАЖНО: список админов ниже должен совпадать с ADMIN_EMAILS
+// в js/config.js. Деплой: Firebase Console → Firestore → Rules,
+// либо `firebase deploy --only firestore:rules`.
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function email() {
+      return request.auth.token.email;
+    }
+
+    // >>> тот же список, что и в js/config.js <<<
+    function isAdmin() {
+      return signedIn() && email() in ['azovskiyr@ya.ru'];
+    }
+
+    function isLeader() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(email()));
+    }
+
+    function myFaction() {
+      return get(/databases/$(database)/documents/users/$(email())).data.faction;
+    }
+
+    // -------- Привязки лидеров: users/{email} → { faction } --------
+    match /users/{userEmail} {
+      // лидер может прочитать только СВОЙ документ (нужно при входе),
+      // весь список видит только админ
+      allow get: if isAdmin() || (signedIn() && email() == userEmail);
+      allow list: if isAdmin();
+
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['faction'])
+        && request.resource.data.faction is string
+        && request.resource.data.faction.size() > 0
+        && request.resource.data.faction.size() < 100;
+
+      allow delete: if isAdmin();
+    }
+
+    // -------- Отчёты: reports/{id} --------
+    match /reports/{reportId} {
+      // админ видит всё; лидер — только отчёты своей фракции.
+      // Запрос лидера ОБЯЗАН содержать where('faction','==',своя),
+      // иначе Firestore его отклонит — клиент так и делает.
+      allow get, list: if isAdmin()
+        || (isLeader() && resource.data.faction == myFaction());
+
+      allow create: if signedIn()
+        && request.resource.data.authorEmail == email()
+        && request.resource.data.faction is string
+        && request.resource.data.name is string
+        && request.resource.data.date is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() < 200
+        && request.resource.data.problems is string
+        && request.resource.data.problems.size() < 5000
+        && request.resource.data.improvements is string
+        && request.resource.data.improvements.size() < 5000
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() < 5000
+        // лидер может создать отчёт ТОЛЬКО на свою фракцию
+        && (isAdmin() || (isLeader() && request.resource.data.faction == myFaction()));
+
+      // редактирование выключено; удаление — только админ
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // -------- Всё остальное запрещено --------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

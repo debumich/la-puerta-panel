@@ -11,7 +11,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage();
 const FieldValue = firebase.firestore.FieldValue;
 
 const API_URL = 'https://la-puerta-proxy.vercel.app/';

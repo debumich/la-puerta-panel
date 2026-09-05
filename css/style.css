@@ -4,6 +4,8 @@
    ============================================================ */
 
 :root{
+  color-scheme: dark;
+
   /* палитра */
   --ink:        #05070d;
   --ink-2:      #0a0f1e;
@@ -57,7 +59,7 @@ html,body{
 ::-webkit-scrollbar-thumb:hover{ background:rgba(148,140,255,.32); }
 
 /* ---------- фон ---------- */
-.bg-fx{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; background:var(--ink); }
+.bg-fx{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; background:var(--ink); forced-color-adjust:none; -ms-high-contrast-adjust:none; }
 
 /* мягкое сияние + разметка сеткой, сетка медленно "дышит" */
 .bg-fx::before{

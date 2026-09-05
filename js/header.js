@@ -1,47 +1,171 @@
-/* ============================================================
-   Хедер. Собирается из JS, поэтому живёт отдельным файлом —
-   вкладки зависят от роли пользователя.
-   ============================================================ */
+function renderHeader() {
+  const root = document.getElementById("header-root");
 
-function renderHeader(){
-  const root = document.getElementById('header-root');
-  if (!currentUser){ root.innerHTML = ''; return; }
-
-  const isAdmin = currentUser.role === 'admin';
-
-  const tabs = [
-    { id: 'leaders', label: 'Лидеры' },
-    { id: 'reports', label: 'Отчёты' }
-  ];
-  if (isAdmin){
-    tabs.push({ id: 'manager',  label: 'Управление' });
-    tabs.push({ id: 'settings', label: 'Настройки' });
+  if (!currentUser) {
+    root.innerHTML = "";
+    return;
   }
 
-  const roleLabel = isAdmin ? 'Администратор' : `Лидер — ${currentUser.faction}`;
-  const initial = (currentUser.email || '?')[0].toUpperCase();
+  const isPublic = currentUser.role === "public";
+  const isAdmin = currentUser.role === "admin";
+
+  const tabs = isPublic
+    ? [
+        {
+          id: "leaders",
+          label: "Лидеры"
+        }
+      ]
+    : [
+        {
+          id: "home",
+          label: "Главная"
+        },
+        {
+          id: "leaders",
+          label: "Лидеры"
+        }
+      ];
+
+  if (!isPublic) {
+    tabs.push(
+      {
+        id: "reports",
+        label: "Отчёты"
+      },
+      {
+        id: "history",
+        label: "Архив лидеров"
+      },
+      {
+        id: "support",
+        label: "Баги и предложения"
+      },
+      {
+        id: "profile",
+        label: "Профиль"
+      }
+    );
+  }
+
+  if (isAdmin) {
+    tabs.push(
+      {
+        id: "manager",
+        label: "Управление"
+      },
+      {
+        id: "settings",
+        label: "Настройки"
+      }
+    );
+  }
+
+  const display =
+    currentUser.displayName ||
+    currentUser.email ||
+    "Гость";
+
+  const avatar = currentUser.avatarUrl
+    ? `<img class="avatar" src="${escapeHtml(
+        currentUser.avatarUrl
+      )}" alt="">`
+    : `<div class="avatar">${escapeHtml(
+        initials(display, currentUser.email)
+      )}</div>`;
 
   root.innerHTML = `
-  <header class="header">
-    <div class="header-left">
-      <a class="logo-link" data-tab="leaders" title="На главную">
-        <img src="Header.png" alt="La Puerta" class="header-logo" onerror="this.style.display='none'">
-      </a>
-      <nav class="header-tabs">
-        ${tabs.map(t => `<button class="tab-btn${t.id === 'leaders' ? ' active' : ''}" data-tab="${t.id}">${t.label}</button>`).join('')}
-      </nav>
-    </div>
-    <div class="header-user">
-      <div class="user-meta">
-        <span class="role-badge${isAdmin ? ' role-admin' : ''}">${escapeHtml(roleLabel)}</span>
-        <span class="user-email">${escapeHtml(currentUser.email)}</span>
-      </div>
-      <div class="avatar" title="${escapeHtml(currentUser.email)}">${escapeHtml(initial)}</div>
-      <button class="btn btn-icon" id="logoutBtn" title="Выйти">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
-      </button>
-    </div>
-  </header>`;
+    <header class="header">
+      <div class="header-left">
 
-  document.getElementById('logoutBtn').addEventListener('click', logout);
+        <a class="logo-link" data-tab="home">
+          <img
+            src="Header.png"
+            alt="La Puerta"
+            class="header-logo"
+          >
+        </a>
+
+        <nav class="header-tabs">
+          ${tabs
+            .map(
+              (t) =>
+                `<button class="tab-btn" data-tab="${t.id}">${t.label}</button>`
+            )
+            .join("")}
+        </nav>
+
+      </div>
+
+      <div class="header-user">
+
+        <div class="user-meta">
+          <span class="role-badge ${
+            isAdmin ? "role-admin" : ""
+          }">
+            ${
+              isPublic
+                ? "Гость"
+                : isAdmin
+                ? "Администратор"
+                : `Лидер — ${escapeHtml(
+                    currentUser.faction
+                  )}`
+            }
+          </span>
+
+          <span class="user-email">
+            ${escapeHtml(
+              currentUser.email ||
+                "Публичный просмотр"
+            )}
+          </span>
+        </div>
+
+        ${avatar}
+
+        ${
+          isPublic
+            ? `<button class="btn btn-ghost" id="loginHeaderBtn">Войти</button>`
+            : `<button class="btn btn-icon" id="logoutBtn" title="Выйти">↪</button>`
+        }
+
+      </div>
+    </header>
+  `;
+
+  document
+    .querySelectorAll("#header-root .tab-btn")
+    .forEach((b) => {
+      b.classList.toggle(
+        "active",
+        b.dataset.tab ===
+          (isPublic ? "leaders" : "home")
+      );
+    });
+
+  const loginButton =
+    document.getElementById("loginHeaderBtn");
+
+  if (loginButton) {
+    loginButton.addEventListener("click", login);
+  }
+
+  const logoutButton =
+    document.getElementById("logoutBtn");
+
+  if (logoutButton) {
+    logoutButton.addEventListener("click", logout);
+  }
+}
+
+function setActiveTab(tab) {
+  document
+    .querySelectorAll("#header-root .tab-btn")
+    .forEach((b) => {
+      b.classList.toggle(
+        "active",
+        b.dataset.tab === tab
+      );
+    });
 }

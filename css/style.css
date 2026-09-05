@@ -91,8 +91,12 @@ h2,h3{margin:0}
 .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:12px 24px;background:rgba(5,7,13,.7);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .page-title{font-family:var(--font-display);font-size:16px;font-weight:600;margin:0;flex:1;letter-spacing:.01em}
 .topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.menu-btn{display:none}
 .content{padding:24px;max-width:1240px;width:100%;margin:0 auto}
+
+/* Кнопка меню скрыта на ПК */
+#menuBtn {
+  display: none !important;
+}
 
 .panel{display:none;animation:fadeIn .22s ease}
 .panel.active{display:block}
@@ -421,7 +425,9 @@ h2,h3{margin:0}
   body.sidebar-open .sidebar{transform:none}
   body.sidebar-open .sidebar-backdrop{display:block}
   .main{margin-left:0}
-  .menu-btn{display:inline-flex !important}
+  #menuBtn {
+    display: inline-flex !important;
+  }
   .content{padding:16px}
   .topbar{padding:10px 14px}
   .topbar-right .faction-badge{display:none}

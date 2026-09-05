@@ -41,12 +41,12 @@ function renderSidebar(){
 
 function levelColor(n){
   const colors = {
-    1: '#5d6489',
+    1: '#4f8cff',
     2: '#4f8cff',
     3: '#f0b429',
-    4: '#e8c84a',
-    5: '#3ddc84',
-    6: '#8b5cff'
+    4: '#ffd700',
+    5: '#2e7d32',
+    6: '#3ddc84'
   };
   return colors[n] || '#5d6489';
 }

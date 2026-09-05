@@ -60,12 +60,7 @@ html,body{
     repeating-linear-gradient(90deg,rgba(178,172,255,.12) 0 1px,transparent 1px 48px),
     repeating-linear-gradient(0deg,rgba(178,172,255,.12) 0 1px,transparent 1px 48px),
     var(--ink);
-  background-position:0 0,0 0,0 0,0 0,0 0;
-  animation:grid-drift 120s linear infinite
-}
-@keyframes grid-drift{
-  0%{background-position:0 0,0 0,0 0,0 0,0 0}
-  100%{background-position:0 0,0 0,0 0,480px 0,0 480px}
+  background-position:0 0,0 0,0 0,0 0,0 0
 }
 .app{position:relative;z-index:1}
 .wrap{max-width:1180px;margin:0 auto;padding:0 20px 90px}

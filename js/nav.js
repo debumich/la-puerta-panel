@@ -18,7 +18,6 @@ function renderSidebar(){
   const u = state.user;
   el.innerHTML = `
     <div class="brand">
-      <img src="Header.png" alt="" class="brand-logo" onerror="this.hidden=true">
       <div class="brand-text">GTA5RP <span>HUB</span></div>
     </div>
     <nav class="nav">

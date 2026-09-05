@@ -1,44 +1,90 @@
 const ADMIN_TABS = ["manager", "settings"];
 
 function switchTab(tab) {
-  const publicTabs = ["home", "leaders"];
+  const publicTabs = ["leaders"];
 
-  if (currentUser?.role === "public" && !publicTabs.includes(tab)) {
-    return showLoginHint();
+  if (
+    currentUser?.role === "public" &&
+    !publicTabs.includes(tab)
+  ) {
+    if (tab === "reports" || tab === "support" || tab === "profile" || tab === "history") {
+      showLoginHint();
+    }
+
+    return;
   }
 
-  if (ADMIN_TABS.includes(tab) && currentUser?.role !== "admin") {
-    return toast("Раздел доступен только администратору", "error");
+  if (
+    ADMIN_TABS.includes(tab) &&
+    currentUser?.role !== "admin"
+  ) {
+    toast(
+      "Раздел доступен только администратору",
+      "error"
+    );
+
+    return;
   }
 
-  document.querySelectorAll(".panel").forEach((p) => {
-    p.classList.toggle("active", p.id === `panel-${tab}`);
-  });
+  const panel = document.getElementById(
+    `panel-${tab}`
+  );
+
+  if (!panel) {
+    console.warn(
+      `Панель panel-${tab} не найдена`
+    );
+
+    return;
+  }
+
+  document
+    .querySelectorAll(".panel")
+    .forEach((p) => {
+      p.classList.toggle(
+        "active",
+        p.id === `panel-${tab}`
+      );
+    });
 
   setActiveTab(tab);
+
+  if (tab === "home") {
+    return;
+  }
+
+  if (tab === "leaders") {
+    renderLeaders();
+    return;
+  }
 
   if (tab === "reports") {
     initReportForm();
     renderReports();
+    return;
   }
 
   if (tab === "history") {
     initHistory();
     renderHistory();
+    return;
   }
 
   if (tab === "manager") {
     fillManagerFactionSelect();
     loadLeadersList();
+    return;
   }
 
   if (tab === "settings") {
     renderFactionToggles();
     renderMyFactionsChips();
+    return;
   }
 
   if (tab === "support") {
     loadTickets();
+    return;
   }
 
   if (tab === "profile") {
@@ -47,275 +93,734 @@ function switchTab(tab) {
 }
 
 function showLoginHint() {
-  toast("Войдите через Google, чтобы открыть этот раздел");
+  toast(
+    "Войдите через Google, чтобы открыть этот раздел"
+  );
 }
 
 function bindEvents() {
-  document
-    .getElementById("googleLoginBtn")
-    .addEventListener("click", login);
-
-  document
-    .getElementById("header-root")
-    .addEventListener("click", (e) => {
-      const el = e.target.closest("[data-tab]");
-      if (el) {
-        switchTab(el.dataset.tab);
-      }
-    });
-
-  document
-    .getElementById("leaderSearch")
-    .addEventListener(
-      "input",
-      debounce((e) => {
-        ui.search = e.target.value;
-        renderLeaders();
-      }, 120)
+  const googleLoginBtn =
+    document.getElementById(
+      "googleLoginBtn"
     );
 
-  document
-    .getElementById("statsRow")
-    .addEventListener("click", (e) => {
-      const c = e.target.closest(".stat-chip");
-      if (!c) return;
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener(
+      "click",
+      login
+    );
+  }
 
-      const s = c.dataset.status || null;
-      ui.statusFilter = ui.statusFilter === s ? null : s;
+  const headerRoot =
+    document.getElementById(
+      "header-root"
+    );
 
-      renderLeaders();
-    });
+  if (headerRoot) {
+    headerRoot.addEventListener(
+      "click",
+      (e) => {
+        const el =
+          e.target.closest(
+            "[data-tab]"
+          );
 
-  document
-    .getElementById("refreshBtn")
-    .addEventListener("click", () => fetchLeaders(true));
-
-  document
-    .getElementById("leadersRoot")
-    .addEventListener("click", (e) => {
-      if (e.target.closest('[data-action="retry-leaders"]')) {
-        fetchLeaders(true);
-      }
-    });
-
-  document
-    .getElementById("reportFaction")
-    .addEventListener("change", updateLeaderName);
-
-  document
-    .getElementById("saveReportBtn")
-    .addEventListener("click", saveReport);
-
-  document
-    .getElementById("reportsList")
-    .addEventListener("click", (e) => {
-      const edit = e.target.closest("[data-edit-comment]");
-      const save = e.target.closest("[data-save-comment]");
-      const cancel = e.target.closest("[data-cancel-edit]");
-      const del = e.target.closest("[data-report-delete]");
-
-      if (edit) {
-        editReportComment(edit.dataset.editComment);
-      }
-
-      if (save) {
-        saveReportComment(save.dataset.saveComment);
-      }
-
-      if (cancel) {
-        renderReports();
-      }
-
-      if (del) {
-        deleteReport(del.dataset.reportDelete);
-      }
-    });
-
-  ["reportFactionFilter", "reportFilterStart", "reportFilterEnd"].forEach(
-    (id) => {
-      document.getElementById(id).addEventListener("change", (e) => {
-        if (id === "reportFactionFilter") {
-          ui.reportFactionFilter = e.target.value;
+        if (!el) {
+          return;
         }
 
-        if (id === "reportFilterStart") {
-          ui.historyStart = e.target.value;
-        }
+        e.preventDefault();
 
-        if (id === "reportFilterEnd") {
-          ui.historyEnd = e.target.value;
-        }
+        switchTab(
+          el.dataset.tab
+        );
+      }
+    );
+  }
 
-        renderReports();
-      });
+  document.addEventListener(
+    "click",
+    (e) => {
+      const el =
+        e.target.closest(
+          "[data-tab]"
+        );
+
+      if (!el) {
+        return;
+      }
+
+      if (
+        headerRoot &&
+        headerRoot.contains(el)
+      ) {
+        return;
+      }
+
+      e.preventDefault();
+
+      const tab =
+        el.dataset.tab;
+
+      if (
+        el.dataset.authOnly ===
+        "true" &&
+        currentUser?.role ===
+          "public"
+      ) {
+        showLoginHint();
+        return;
+      }
+
+      switchTab(tab);
     }
   );
 
-  document
-    .getElementById("reportFilterReset")
-    .addEventListener("click", () => {
-      ui.reportFactionFilter = "";
-      ui.historyStart = "";
-      ui.historyEnd = "";
+  const leaderSearch =
+    document.getElementById(
+      "leaderSearch"
+    );
 
-      ["reportFactionFilter", "reportFilterStart", "reportFilterEnd"].forEach(
-        (id) => {
-          document.getElementById(id).value = "";
-        }
-      );
-
-      renderReports();
-    });
-
-  document
-    .getElementById("addLeaderBtn")
-    .addEventListener("click", addLeader);
-
-  document
-    .getElementById("managerSearch")
-    .addEventListener(
+  if (leaderSearch) {
+    leaderSearch.addEventListener(
       "input",
       debounce((e) => {
-        ui.managerSearch = e.target.value;
+        ui.search =
+          e.target.value;
+
+        renderLeaders();
+      }, 120)
+    );
+  }
+
+  const statsRow =
+    document.getElementById(
+      "statsRow"
+    );
+
+  if (statsRow) {
+    statsRow.addEventListener(
+      "click",
+      (e) => {
+        const c =
+          e.target.closest(
+            ".stat-chip"
+          );
+
+        if (!c) {
+          return;
+        }
+
+        const s =
+          c.dataset.status ||
+          null;
+
+        ui.statusFilter =
+          ui.statusFilter === s
+            ? null
+            : s;
+
+        renderLeaders();
+      }
+    );
+  }
+
+  const refreshBtn =
+    document.getElementById(
+      "refreshBtn"
+    );
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener(
+      "click",
+      () => fetchLeaders(true)
+    );
+  }
+
+  const leadersRoot =
+    document.getElementById(
+      "leadersRoot"
+    );
+
+  if (leadersRoot) {
+    leadersRoot.addEventListener(
+      "click",
+      (e) => {
+        if (
+          e.target.closest(
+            '[data-action="retry-leaders"]'
+          )
+        ) {
+          fetchLeaders(true);
+        }
+      }
+    );
+  }
+
+  const reportFaction =
+    document.getElementById(
+      "reportFaction"
+    );
+
+  if (reportFaction) {
+    reportFaction.addEventListener(
+      "change",
+      updateLeaderName
+    );
+  }
+
+  const saveReportBtn =
+    document.getElementById(
+      "saveReportBtn"
+    );
+
+  if (saveReportBtn) {
+    saveReportBtn.addEventListener(
+      "click",
+      saveReport
+    );
+  }
+
+  const reportsList =
+    document.getElementById(
+      "reportsList"
+    );
+
+  if (reportsList) {
+    reportsList.addEventListener(
+      "click",
+      (e) => {
+        const edit =
+          e.target.closest(
+            "[data-edit-comment]"
+          );
+
+        const save =
+          e.target.closest(
+            "[data-save-comment]"
+          );
+
+        const cancel =
+          e.target.closest(
+            "[data-cancel-edit]"
+          );
+
+        const del =
+          e.target.closest(
+            "[data-report-delete]"
+          );
+
+        if (edit) {
+          editReportComment(
+            edit.dataset.editComment
+          );
+        }
+
+        if (save) {
+          saveReportComment(
+            save.dataset.saveComment
+          );
+        }
+
+        if (cancel) {
+          renderReports();
+        }
+
+        if (del) {
+          deleteReport(
+            del.dataset.reportDelete
+          );
+        }
+      }
+    );
+  }
+
+  const reportFactionFilter =
+    document.getElementById(
+      "reportFactionFilter"
+    );
+
+  if (reportFactionFilter) {
+    reportFactionFilter.addEventListener(
+      "change",
+      (e) => {
+        ui.reportFactionFilter =
+          e.target.value;
+
+        renderReports();
+      }
+    );
+  }
+
+  const reportFilterStart =
+    document.getElementById(
+      "reportFilterStart"
+    );
+
+  if (reportFilterStart) {
+    reportFilterStart.addEventListener(
+      "change",
+      (e) => {
+        ui.historyStart =
+          e.target.value;
+
+        renderReports();
+      }
+    );
+  }
+
+  const reportFilterEnd =
+    document.getElementById(
+      "reportFilterEnd"
+    );
+
+  if (reportFilterEnd) {
+    reportFilterEnd.addEventListener(
+      "change",
+      (e) => {
+        ui.historyEnd =
+          e.target.value;
+
+        renderReports();
+      }
+    );
+  }
+
+  const reportFilterReset =
+    document.getElementById(
+      "reportFilterReset"
+    );
+
+  if (reportFilterReset) {
+    reportFilterReset.addEventListener(
+      "click",
+      () => {
+        ui.reportFactionFilter =
+          "";
+
+        ui.historyStart =
+          "";
+
+        ui.historyEnd =
+          "";
+
+        if (reportFactionFilter) {
+          reportFactionFilter.value =
+            "";
+        }
+
+        if (reportFilterStart) {
+          reportFilterStart.value =
+            "";
+        }
+
+        if (reportFilterEnd) {
+          reportFilterEnd.value =
+            "";
+        }
+
+        renderReports();
+      }
+    );
+  }
+
+  const addLeaderBtn =
+    document.getElementById(
+      "addLeaderBtn"
+    );
+
+  if (addLeaderBtn) {
+    addLeaderBtn.addEventListener(
+      "click",
+      addLeader
+    );
+  }
+
+  const newLeaderEmail =
+    document.getElementById(
+      "newLeaderEmail"
+    );
+
+  if (newLeaderEmail) {
+    newLeaderEmail.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "Enter") {
+          addLeader();
+        }
+      }
+    );
+  }
+
+  const managerSearch =
+    document.getElementById(
+      "managerSearch"
+    );
+
+  if (managerSearch) {
+    managerSearch.addEventListener(
+      "input",
+      debounce((e) => {
+        ui.managerSearch =
+          e.target.value;
+
         loadLeadersList();
       }, 120)
     );
+  }
 
-  document
-    .getElementById("leadersListRoot")
-    .addEventListener("click", (e) => {
-      const b = e.target.closest("[data-remove-leader]");
-      if (b) {
-        removeLeader(b.dataset.removeLeader);
-      }
-    });
+  const leadersListRoot =
+    document.getElementById(
+      "leadersListRoot"
+    );
 
-  document
-    .getElementById("selectAllBtn")
-    .addEventListener("click", selectAllFactions);
+  if (leadersListRoot) {
+    leadersListRoot.addEventListener(
+      "click",
+      (e) => {
+        const b =
+          e.target.closest(
+            "[data-remove-leader]"
+          );
 
-  document
-    .getElementById("deselectAllBtn")
-    .addEventListener("click", deselectAllFactions);
-
-  document
-    .getElementById("settingsCategories")
-    .addEventListener("click", (e) => {
-      const el = e.target.closest(".faction-toggle-item");
-      if (!el) return;
-
-      if (el.dataset.gov) {
-        toggleGov();
-      } else {
-        toggleFactionSingle(el.dataset.key);
-      }
-    });
-
-  document
-    .getElementById("myFactionsChips")
-    .addEventListener("click", (e) => {
-      const el = e.target.closest(".remove");
-      if (el) {
-        toggleFactionSingle(el.dataset.removeKey);
-      }
-    });
-
-  document
-    .getElementById("saveHistoryBtn")
-    .addEventListener("click", saveHistory);
-
-  ["historyFactionFilter", "historyStart", "historyEnd"].forEach((id) => {
-    document.getElementById(id).addEventListener("change", () => {
-      ui.historyFactionFilter =
-        document.getElementById("historyFactionFilter").value;
-
-      ui.historyStart =
-        document.getElementById("historyStart").value;
-
-      ui.historyEnd =
-        document.getElementById("historyEnd").value;
-
-      renderHistory();
-    });
-  });
-
-  document
-    .getElementById("historyReset")
-    .addEventListener("click", () => {
-      ui.historyFactionFilter = "";
-      ui.historyStart = "";
-      ui.historyEnd = "";
-
-      ["historyFactionFilter", "historyStart", "historyEnd"].forEach(
-        (id) => {
-          document.getElementById(id).value = "";
+        if (b) {
+          removeLeader(
+            b.dataset.removeLeader
+          );
         }
-      );
-
-      renderHistory();
-    });
-
-  document
-    .getElementById("historyList")
-    .addEventListener("click", (e) => {
-      const b = e.target.closest("[data-history-delete]");
-
-      if (b) {
-        deleteHistory(b.dataset.historyDelete);
       }
-    });
+    );
+  }
 
-  document
-    .getElementById("createTicketBtn")
-    .addEventListener("click", createTicket);
+  const selectAllBtn =
+    document.getElementById(
+      "selectAllBtn"
+    );
 
-  document
-    .getElementById("ticketsList")
-    .addEventListener("click", (e) => {
-      const save = e.target.closest("[data-ticket-save]");
-      const del = e.target.closest("[data-ticket-delete]");
+  if (selectAllBtn) {
+    selectAllBtn.addEventListener(
+      "click",
+      selectAllFactions
+    );
+  }
 
-      if (save) {
-        updateTicket(save.dataset.ticketSave);
+  const deselectAllBtn =
+    document.getElementById(
+      "deselectAllBtn"
+    );
+
+  if (deselectAllBtn) {
+    deselectAllBtn.addEventListener(
+      "click",
+      deselectAllFactions
+    );
+  }
+
+  const settingsCategories =
+    document.getElementById(
+      "settingsCategories"
+    );
+
+  if (settingsCategories) {
+    settingsCategories.addEventListener(
+      "click",
+      (e) => {
+        const el =
+          e.target.closest(
+            ".faction-toggle-item"
+          );
+
+        if (!el) {
+          return;
+        }
+
+        if (el.dataset.gov) {
+          toggleGov();
+        } else {
+          toggleFactionSingle(
+            el.dataset.key
+          );
+        }
       }
+    );
+  }
 
-      if (del) {
-        deleteTicket(del.dataset.ticketDelete);
+  const myFactionsChips =
+    document.getElementById(
+      "myFactionsChips"
+    );
+
+  if (myFactionsChips) {
+    myFactionsChips.addEventListener(
+      "click",
+      (e) => {
+        const el =
+          e.target.closest(
+            ".remove"
+          );
+
+        if (!el) {
+          return;
+        }
+
+        toggleFactionSingle(
+          el.dataset.removeKey
+        );
       }
-    });
+    );
+  }
 
-  document
-    .getElementById("saveProfileBtn")
-    .addEventListener("click", saveProfile);
+  const saveHistoryBtn =
+    document.getElementById(
+      "saveHistoryBtn"
+    );
 
-  document
-    .getElementById("resetProfileBtn")
-    .addEventListener("click", resetProfile);
+  if (saveHistoryBtn) {
+    saveHistoryBtn.addEventListener(
+      "click",
+      saveHistory
+    );
+  }
 
-  document
-    .getElementById("confirmOk")
-    .addEventListener("click", () => closeConfirm(true));
+  const historyFactionFilter =
+    document.getElementById(
+      "historyFactionFilter"
+    );
 
-  document
-    .getElementById("confirmCancel")
-    .addEventListener("click", () => closeConfirm(false));
+  if (historyFactionFilter) {
+    historyFactionFilter.addEventListener(
+      "change",
+      (e) => {
+        ui.historyFactionFilter =
+          e.target.value;
 
-  document
-    .getElementById("confirmOverlay")
-    .addEventListener("click", (e) => {
-      if (e.target === e.currentTarget) {
+        renderHistory();
+      }
+    );
+  }
+
+  const historyStart =
+    document.getElementById(
+      "historyStart"
+    );
+
+  if (historyStart) {
+    historyStart.addEventListener(
+      "change",
+      (e) => {
+        ui.historyStart =
+          e.target.value;
+
+        renderHistory();
+      }
+    );
+  }
+
+  const historyEnd =
+    document.getElementById(
+      "historyEnd"
+    );
+
+  if (historyEnd) {
+    historyEnd.addEventListener(
+      "change",
+      (e) => {
+        ui.historyEnd =
+          e.target.value;
+
+        renderHistory();
+      }
+    );
+  }
+
+  const historyReset =
+    document.getElementById(
+      "historyReset"
+    );
+
+  if (historyReset) {
+    historyReset.addEventListener(
+      "click",
+      () => {
+        ui.historyFactionFilter =
+          "";
+
+        ui.historyStart =
+          "";
+
+        ui.historyEnd =
+          "";
+
+        if (historyFactionFilter) {
+          historyFactionFilter.value =
+            "";
+        }
+
+        if (historyStart) {
+          historyStart.value =
+            "";
+        }
+
+        if (historyEnd) {
+          historyEnd.value =
+            "";
+        }
+
+        renderHistory();
+      }
+    );
+  }
+
+  const historyList =
+    document.getElementById(
+      "historyList"
+    );
+
+  if (historyList) {
+    historyList.addEventListener(
+      "click",
+      (e) => {
+        const b =
+          e.target.closest(
+            "[data-history-delete]"
+          );
+
+        if (b) {
+          deleteHistory(
+            b.dataset.historyDelete
+          );
+        }
+      }
+    );
+  }
+
+  const createTicketBtn =
+    document.getElementById(
+      "createTicketBtn"
+    );
+
+  if (createTicketBtn) {
+    createTicketBtn.addEventListener(
+      "click",
+      createTicket
+    );
+  }
+
+  const ticketsList =
+    document.getElementById(
+      "ticketsList"
+    );
+
+  if (ticketsList) {
+    ticketsList.addEventListener(
+      "click",
+      (e) => {
+        const save =
+          e.target.closest(
+            "[data-ticket-save]"
+          );
+
+        const del =
+          e.target.closest(
+            "[data-ticket-delete]"
+          );
+
+        if (save) {
+          updateTicket(
+            save.dataset.ticketSave
+          );
+        }
+
+        if (del) {
+          deleteTicket(
+            del.dataset.ticketDelete
+          );
+        }
+      }
+    );
+  }
+
+  const saveProfileBtn =
+    document.getElementById(
+      "saveProfileBtn"
+    );
+
+  if (saveProfileBtn) {
+    saveProfileBtn.addEventListener(
+      "click",
+      saveProfile
+    );
+  }
+
+  const resetProfileBtn =
+    document.getElementById(
+      "resetProfileBtn"
+    );
+
+  if (resetProfileBtn) {
+    resetProfileBtn.addEventListener(
+      "click",
+      resetProfile
+    );
+  }
+
+  const confirmOk =
+    document.getElementById(
+      "confirmOk"
+    );
+
+  if (confirmOk) {
+    confirmOk.addEventListener(
+      "click",
+      () => closeConfirm(true)
+    );
+  }
+
+  const confirmCancel =
+    document.getElementById(
+      "confirmCancel"
+    );
+
+  if (confirmCancel) {
+    confirmCancel.addEventListener(
+      "click",
+      () => closeConfirm(false)
+    );
+  }
+
+  const confirmOverlay =
+    document.getElementById(
+      "confirmOverlay"
+    );
+
+  if (confirmOverlay) {
+    confirmOverlay.addEventListener(
+      "click",
+      (e) => {
+        if (
+          e.target ===
+          e.currentTarget
+        ) {
+          closeConfirm(false);
+        }
+      }
+    );
+  }
+
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key === "Escape") {
         closeConfirm(false);
       }
-    });
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      closeConfirm(false);
     }
-  });
+  );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  bindEvents();
-  initAuth();
-});
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    bindEvents();
+    initAuth();
+  }
+);

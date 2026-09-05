@@ -52,7 +52,7 @@ function normalizeUser(uid, d){
     uid,
     email: d.email || '',
     displayName: typeof d.displayName === 'string' ? d.displayName : '',
-    avatarUrl: typeof d.avatarUrl === 'string' ? d.avatarUrl : '',
+    avatarUrl: '',
     serverLevel: Number.isInteger(d.serverLevel) ? d.serverLevel : 1,
     systemRole: ROLES[d.systemRole] ? d.systemRole : 'user',
     faction: typeof d.faction === 'string' && d.faction ? d.faction : null,

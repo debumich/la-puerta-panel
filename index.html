@@ -9,7 +9,7 @@
 <link rel="icon" type="image/x-icon" href="Icon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -164,5 +164,34 @@
 <script src="js/settings.js"></script>
 <script src="js/manager.js"></script>
 <script src="js/app.js"></script>
+<script>
+(function(){
+  function replaceVacant(root){
+    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    let node;
+    while(node=walker.nextNode()) nodes.push(node);
+    nodes.forEach(function(textNode){
+      if(textNode.nodeValue.includes('Вакантно')){
+        textNode.nodeValue=textNode.nodeValue.replaceAll('Вакантно','Не назначено');
+      }
+    });
+  }
+  replaceVacant(document.body);
+  new MutationObserver(function(mutations){
+    mutations.forEach(function(mutation){
+      mutation.addedNodes.forEach(function(node){
+        if(node.nodeType===Node.TEXT_NODE){
+          if(node.nodeValue.includes('Вакантно')){
+            node.nodeValue=node.nodeValue.replaceAll('Вакантно','Не назначено');
+          }
+        }else if(node.nodeType===Node.ELEMENT_NODE){
+          replaceVacant(node);
+        }
+      });
+    });
+  }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>

@@ -61,16 +61,18 @@ function renderUsers(){
     <div class="card table-card">
       <table class="data-table users-table">
         <thead><tr><th>Пользователь</th><th>Роль</th><th>Уровень</th><th>Фракции</th><th>Статус</th><th>В системе с</th><th></th></tr></thead>
-        <tbody>${rows.map(u => `
-          <tr class="${u.active === false ? 'row-muted' : ''}">
-            <td><div class="user-cell">${avatarHtml(u.avatarUrl, u.displayName || u.email, 'avatar-sm')}<div><div class="uc-name">${escapeHtml(u.displayName || '—')}</div><div class="uc-email mono">${escapeHtml(u.email)}</div></div></td>
-            <td><span class="role-badge${u.systemRole === 'site_admin' ? ' role-admin' : ''}">${escapeHtml(roleLabel(u))}</span></td>
-            <td>${escapeHtml(levelLabel(u.serverLevel))}</td>
+        <tbody>${rows.map(u => {
+          const isRegular = u.systemRole === 'user';
+          return `<tr class="${u.active === false ? 'row-muted' : ''}">
+            <td><div class="user-cell"><div class="avatar avatar-sm">${escapeHtml(initialsOf(u.displayName || u.email))}</div><div><div class="uc-name">${escapeHtml(u.displayName || '—')}</div><div class="uc-email mono">${escapeHtml(u.email)}</div></div></td>
+            <td><span class="role-badge${u.systemRole === 'site_admin' ? ' role-admin' : ''}${u.systemRole === 'server_admin' ? ' role-server_admin' : ''}">${escapeHtml(roleLabel(u))}</span></td>
+            <td>${isRegular ? '—' : `<span class="${levelClass(u.serverLevel)}">${escapeHtml(levelLabel(u.serverLevel))}</span>`}</td>
             <td>${userFactionsText(u)}</td>
             <td>${u.active === false ? '<span class="badge badge-grey">Отключён</span>' : presenceBadge(_presence[u.uid])}</td>
             <td class="mono">${fmtDate(u.createdAt)}</td>
             <td class="td-actions">${userActionsHtml(u)}</td>
-          </tr>`).join('')}
+          </tr>`;
+        }).join('')}
         </tbody>
       </table>
     </div>`;

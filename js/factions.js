@@ -48,24 +48,36 @@ function factionGroupedOptionsHtml(selected, includeEmpty){
 }
 
 async function syncFactionsFromForum(){
-  if (!isSiteAdmin()) return;
+  if (!isSiteAdmin()) {
+    toast('У вас нет прав для этого действия', 'error');
+    return;
+  }
+  if (!state.forum) {
+    toast('Сначала загрузите данные с форума', 'error');
+    return;
+  }
   const missing = unmappedForumKeys();
-  if (!missing.length){ toast('Все фракции с форума уже добавлены'); return; }
+  if (!missing.length){ 
+    toast('Все фракции с форума уже добавлены'); 
+    return; 
+  }
   const btn = document.getElementById('syncFactionsBtn');
   setLoading(btn, true);
   try {
     const batch = db.batch();
     const used = new Set(state.factions.map(f => f.id));
-    missing.forEach(key => {
+    let added = 0;
+    for (const key of missing) {
       let id = slugify(key);
       let n = 2;
       while (used.has(id)) id = slugify(key) + '-' + (n++);
       used.add(id);
       const entry = state.forum[key];
+      const category = CATEGORY_ORDER.includes(entry?.category) ? entry.category : 'other';
       const data = {
         name: key,
         forumKey: key,
-        category: CATEGORY_ORDER.includes(entry.category) ? entry.category : 'other',
+        category: category,
         logoUrl: '',
         active: true,
         createdAt: FieldValue.serverTimestamp(),
@@ -73,10 +85,11 @@ async function syncFactionsFromForum(){
         updatedAt: FieldValue.serverTimestamp()
       };
       batch.set(db.collection('factions').doc(id), data);
-      addAudit(batch, { action: 'Добавил фракцию из данных форума', objectType: 'faction', objectId: id, newValue: { name: key, category: data.category }, faction: id });
-    });
+      addAudit(batch, { action: 'Добавил фракцию из данных форума', objectType: 'faction', objectId: id, newValue: { name: key, category: category }, faction: id });
+      added++;
+    }
     await batch.commit();
-    toast(`Добавлено фракций: ${missing.length}`);
+    toast(`Добавлено фракций: ${added}`);
     await loadFactions();
     renderFactionsSection();
     renderLeaders();
@@ -106,7 +119,7 @@ function renderFactionsSection(){
         <thead><tr><th></th><th>Название</th><th>Ключ на форуме</th><th>Категория</th><th>ID</th><th>Статус</th><th></th></tr></thead>
         <tbody>${rows.map(f => `
           <tr class="${f.active === false ? 'row-muted' : ''}">
-            <td>${f.logoUrl ? `<img class="faction-logo-sm" src="${escapeHtml(f.logoUrl)}" alt="">` : `<div class="faction-logo-sm faction-logo-empty">${escapeHtml(initialsOf(f.name))}</div>`}</td>
+            <td><div class="faction-logo-sm faction-logo-empty">${escapeHtml(initialsOf(f.name))}</div></td>
             <td><b>${escapeHtml(f.name)}</b></td>
             <td class="mono">${escapeHtml(f.forumKey || '—')}</td>
             <td>${escapeHtml(CATEGORY_NAMES[f.category] || 'Другое')}</td>
@@ -117,6 +130,7 @@ function renderFactionsSection(){
         </tbody>
       </table>
     </div>` : emptyState('Нажмите «Добавить фракции с форума», чтобы создать записи со стабильными ID.')}`;
+  document.getElementById('syncFactionsBtn')?.addEventListener('click', syncFactionsFromForum);
 }
 
 function openFactionModal(id){
@@ -130,14 +144,7 @@ function openFactionModal(id){
       <datalist id="forumKeysList">${forumKeys.map(k => `<option value="${escapeHtml(k)}"></option>`).join('')}</datalist>
     </div>
     <div class="field"><label for="fCategory">Категория</label><select id="fCategory">${CATEGORY_ORDER.map(c => `<option value="${c}"${(f ? f.category : 'other') === c ? ' selected' : ''}>${CATEGORY_NAMES[c]}</option>`).join('')}</select></div>
-    ${f ? `<div class="field"><label class="check-inline"><input type="checkbox" id="fActive" ${f.active !== false ? 'checked' : ''}> Фракция активна</label></div>
-    <div class="field"><label>Логотип</label>
-      <div class="logo-row">
-        ${f.logoUrl ? `<img class="faction-logo-sm" src="${escapeHtml(f.logoUrl)}" alt="">` : `<div class="faction-logo-sm faction-logo-empty">${escapeHtml(initialsOf(f.name))}</div>`}
-        <label class="btn btn-ghost btn-sm file-btn">Загрузить<input type="file" id="fLogo" accept="image/png,image/jpeg,image/webp" hidden></label>
-        <span class="hint">PNG, JPG или WebP до 3 МБ</span>
-      </div>
-    </div>` : `<div class="field"><label for="fId">ID (нельзя изменить после создания)</label><input type="text" id="fId" maxlength="60" placeholder="Заполнится автоматически из названия"></div>`}
+    ${f ? `<div class="field"><label class="check-inline"><input type="checkbox" id="fActive" ${f.active !== false ? 'checked' : ''}> Фракция активна</label></div>` : `<div class="field"><label for="fId">ID (нельзя изменить после создания)</label><input type="text" id="fId" maxlength="60" placeholder="Заполнится автоматически из названия"></div>`}
     <div class="modal-actions">
       <button class="btn btn-ghost" data-action="modal-close">Отмена</button>
       <button class="btn btn-primary" id="fSaveBtn" data-action="faction-save" data-id="${escapeHtml(f ? f.id : '')}"><span class="spinner"></span><span>Сохранить</span></button>
@@ -161,15 +168,7 @@ async function saveFaction(id){
     if (id){
       const old = state.factionsById[id];
       const active = document.getElementById('fActive').checked;
-      const file = document.getElementById('fLogo').files[0];
-      let logoUrl = old.logoUrl || '';
-      if (file){
-        validateImage(file);
-        const ref = storage.ref(`factionLogos/${id}`);
-        await ref.put(file, { contentType: file.type });
-        logoUrl = await ref.getDownloadURL();
-      }
-      const patch = { name, forumKey, category, active, logoUrl, updatedAt: FieldValue.serverTimestamp() };
+      const patch = { name, forumKey, category, active, updatedAt: FieldValue.serverTimestamp() };
       addVersion(batch, 'faction', id, stripSystem(old));
       batch.update(db.collection('factions').doc(id), patch);
       addAudit(batch, { action: 'Изменил данные фракции', objectType: 'faction', objectId: id, oldValue: { name: old.name, forumKey: old.forumKey, category: old.category, active: old.active }, newValue: { name, forumKey, category, active }, faction: id });
@@ -196,9 +195,3 @@ async function saveFaction(id){
     setLoading(btn, false);
   }
 }
-
-function validateImage(file){
-  if (!IMAGE_TYPES.includes(file.type)) throw { code: 'storage/invalid-format' };
-  if (file.size > AVATAR_MAX_BYTES) throw { code: 'file-too-large' };
-}
-ERROR_MESSAGES['file-too-large'] = 'Файл больше 3 МБ. Выберите изображение поменьше.';

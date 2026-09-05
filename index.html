@@ -3,156 +3,154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#05070d">
+<meta name="theme-color" content="#070910">
 <meta name="color-scheme" content="dark">
-<title>La Puerta · Панель куратора</title>
+<title>La Puerta · Admin Panel</title>
 <link rel="icon" type="image/x-icon" href="Icon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
 </head>
 <body>
-
 <div class="bg-fx" aria-hidden="true"></div>
-
 <div class="app">
-
-  <div class="auth-screen" id="authScreen">
+  <div class="auth-screen" id="authScreen" hidden>
     <div class="auth-card">
       <img src="Header.png" alt="La Puerta" class="auth-logo" onerror="this.style.display='none'">
-      <h1>Панель куратора</h1>
-      <p class="auth-sub">Войдите через Google-аккаунт, привязанный к вашей фракции. Доступ выдаёт администратор.</p>
-      <button class="btn btn-google" id="googleLoginBtn">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C41.4 34.9 44 29.9 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
-        Войти через Google
-      </button>
+      <div class="eyebrow">ADMIN PANEL</div>
+      <h1>Вход в панель</h1>
+      <p class="auth-sub">Войдите через Google-аккаунт, привязанный администратором к вашей фракции.</p>
+      <button class="btn btn-google" id="googleLoginBtn">Войти через Google</button>
       <div class="auth-state" id="authState"></div>
     </div>
   </div>
 
-  <div id="app" hidden>
+  <div id="app">
     <div id="header-root"></div>
     <main class="wrap">
-      <section class="panel active" id="panel-leaders">
-        <div class="toolbar">
-          <div class="stats-row" id="statsRow"></div>
-          <div class="toolbar-right">
-            <label class="search-box">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-              <input type="search" id="leaderSearch" placeholder="Фракция или ник…" autocomplete="off">
-            </label>
-            <button class="btn btn-icon" id="refreshBtn" title="Обновить данные с форума">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.3"/><path d="M21 3v6h-6"/></svg>
-            </button>
+      <section class="panel active" id="panel-home">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <div class="eyebrow">LA PUERTA · 2026</div>
+            <h1>Admin Panel</h1>
+            <p>Универсальный инструмент для взаимодействия с лидерами, контроля сроков, лидерских баллов и рабочих отчётов.</p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" data-tab="leaders">Открыть лидеров</button>
+              <button class="btn btn-ghost" data-tab="reports" data-auth-only="true">Отчёты</button>
+            </div>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat"><span>Разработка</span><b>с 2026 года</b></div>
+            <div class="hero-stat"><span>Лидеры</span><b>сроки и статусы</b></div>
+            <div class="hero-stat"><span>Отчёты</span><b>единая история</b></div>
           </div>
         </div>
+        <div class="feature-grid">
+          <div class="feature-card"><span class="feature-icon">⌁</span><h3>Контроль лидеров</h3><p>Сроки, предупреждения, баллы и назначение отображаются в одном месте.</p></div>
+          <div class="feature-card"><span class="feature-icon">▣</span><h3>История</h3><p>Завершённые сроки сохраняются в архиве и доступны для просмотра.</p></div>
+          <div class="feature-card"><span class="feature-icon">◌</span><h3>Обратная связь</h3><p>Баги и предложения отправляются прямо из панели и получают ответ администратора.</p></div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-leaders">
+        <div class="page-head">
+          <div><div class="eyebrow">LIVE DATA</div><h2>Лидеры</h2><p>Текущий состав, сроки и состояние фракций.</p></div>
+          <div class="toolbar-right"><label class="search-box"><span>⌕</span><input type="search" id="leaderSearch" placeholder="Фракция или ник…" autocomplete="off"></label><button class="btn btn-icon" id="refreshBtn" title="Обновить">↻</button></div>
+        </div>
+        <div class="toolbar"><div class="stats-row" id="statsRow"></div></div>
         <div class="update-note" id="updateNote"></div>
         <div id="leadersRoot"></div>
       </section>
+
       <section class="panel" id="panel-reports">
-        <div class="seg" id="reportSideSeg" hidden>
-          <button class="seg-btn active" data-side="gov">Государственные</button>
-          <button class="seg-btn" data-side="crime">Криминальные</button>
+        <div class="page-head"><div><div class="eyebrow">REPORTS</div><h2>Отчёты</h2><p id="reportsDescription">История отчётов по вашей фракции.</p></div></div>
+        <div class="reports-admin-tools" id="reportsAdminTools" hidden>
+          <div class="filter-block"><label>Фракция</label><select id="reportFactionFilter"><option value="">Все фракции</option></select></div>
+          <div class="filter-block"><label>С</label><input type="date" id="reportFilterStart"></div>
+          <div class="filter-block"><label>По</label><input type="date" id="reportFilterEnd"></div>
+          <button class="btn btn-ghost" id="reportFilterReset">Сброс</button>
         </div>
         <div class="report-layout">
-          <div class="card form-card">
+          <div class="card form-card" id="reportFormCard">
             <h3 id="reportFormTitle">Новый отчёт</h3>
-            <div class="field">
-              <label for="reportFaction">Фракция</label>
-              <select id="reportFaction"></select>
-            </div>
-            <div class="field">
-              <label for="reportName">Имя лидера</label>
-              <input type="text" id="reportName" placeholder="Подставится автоматически" maxlength="120">
-            </div>
-            <div class="field">
-              <label for="reportDate">Дата отчёта</label>
-              <input type="date" id="reportDate">
-            </div>
-            <div class="field">
-              <label for="reportProblems">Основные проблемы</label>
-              <textarea id="reportProblems" rows="3" maxlength="4000"></textarea>
-            </div>
-            <div class="field">
-              <label for="reportImprovements">Улучшения и достижения</label>
-              <textarea id="reportImprovements" rows="3" maxlength="4000"></textarea>
-            </div>
-            <div class="field">
-              <label for="reportComment">Дополнительный комментарий</label>
-              <textarea id="reportComment" rows="2" maxlength="4000"></textarea>
-            </div>
-            <button class="btn btn-primary btn-block" id="saveReportBtn">
-              <span class="spinner"></span><span>Сохранить отчёт</span>
-            </button>
+            <div class="field"><label>Фракция</label><select id="reportFaction"></select></div>
+            <div class="field"><label>Имя лидера</label><input type="text" id="reportName" placeholder="Подставится автоматически" maxlength="120"></div>
+            <div class="field"><label>Дата отчёта</label><input type="date" id="reportDate"></div>
+            <div class="field"><label>Основные проблемы</label><textarea id="reportProblems" rows="4" maxlength="4000"></textarea></div>
+            <div class="field"><label>Улучшения и достижения</label><textarea id="reportImprovements" rows="4" maxlength="4000"></textarea></div>
+            <div class="field"><label>Дополнительный комментарий</label><textarea id="reportComment" rows="3" maxlength="4000"></textarea></div>
+            <button class="btn btn-primary btn-block" id="saveReportBtn">Сохранить отчёт</button>
           </div>
           <div class="card list-card">
-            <div class="list-head">
-              <h3>Сохранённые отчёты</h3>
-              <span class="count-pill" id="reportsCount">0</span>
-            </div>
-            <div class="filter-row">
-              <div class="field"><label for="reportFilterStart">С</label><input type="date" id="reportFilterStart"></div>
-              <div class="field"><label for="reportFilterEnd">По</label><input type="date" id="reportFilterEnd"></div>
-              <button class="btn btn-ghost" id="reportFilterReset">Сброс</button>
-            </div>
+            <div class="list-head"><div><h3>Сохранённые отчёты</h3><span class="sub">Редактирование комментария доступно только действующему автору.</span></div><span class="count-pill" id="reportsCount">0</span></div>
             <div id="reportsList"></div>
           </div>
         </div>
       </section>
+
+      <section class="panel" id="panel-history">
+        <div class="page-head"><div><div class="eyebrow">HISTORY</div><h2>Архив лидеров</h2><p>История завершённых назначений по фракциям.</p></div></div>
+        <div class="history-toolbar">
+          <div class="filter-block"><label>Фракция</label><select id="historyFactionFilter"><option value="">Все фракции</option></select></div>
+          <div class="filter-block"><label>Период с</label><input type="date" id="historyStart"></div>
+          <div class="filter-block"><label>Период по</label><input type="date" id="historyEnd"></div>
+          <button class="btn btn-ghost" id="historyReset">Сброс</button>
+        </div>
+        <div class="history-layout">
+          <div class="card" id="historyFormCard" hidden>
+            <h3>Добавить запись</h3>
+            <div class="field"><label>Фракция</label><select id="historyFaction"></select></div>
+            <div class="field"><label>Лидер</label><input id="historyName" maxlength="120"></div>
+            <div class="field"><label>Начало срока</label><input id="historyStartDate" type="date"></div>
+            <div class="field"><label>Окончание срока</label><input id="historyEndDate" type="date"></div>
+            <div class="field"><label>Результат</label><select id="historyResult"><option value="success">Успешно завершил срок</option><option value="resigned">Ушёл по собственному желанию</option><option value="removed">Снят с должности</option><option value="three_terms">Завершил 3 срока</option></select></div>
+            <div class="field"><label>Примечание</label><textarea id="historyNote" rows="4" maxlength="2000"></textarea></div>
+            <button class="btn btn-primary btn-block" id="saveHistoryBtn">Добавить в архив</button>
+          </div>
+          <div class="card list-card"><div class="list-head"><h3>Предыдущие лидеры</h3><span class="count-pill" id="historyCount">0</span></div><div id="historyList"></div></div>
+        </div>
+      </section>
+
       <section class="panel" id="panel-manager">
+        <div class="page-head"><div><div class="eyebrow">ADMIN</div><h2>Управление</h2><p>Привязка лидеров, аватарки и управление доступом.</p></div></div>
         <div class="card settings-panel">
-          <h3>Управление лидерами</h3>
-          <span class="sub">Привяжите email лидера к фракции — после этого он сможет войти и работать только со своей фракцией.</span>
-          <div class="add-form">
-            <input type="email" id="newLeaderEmail" placeholder="email@gmail.com" autocomplete="off">
-            <select id="newLeaderFaction"></select>
-            <button class="btn btn-primary" id="addLeaderBtn">Добавить</button>
-          </div>
-          <div class="list-head manager-list-head">
-            <h3 class="h-small">Привязанные лидеры</h3>
-            <span class="count-pill" id="leadersCount">0</span>
-            <label class="search-box search-box-sm">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-              <input type="search" id="managerSearch" placeholder="Поиск…" autocomplete="off">
-            </label>
-          </div>
+          <h3>Добавить или перепривязать лидера</h3>
+          <div class="add-form"><input type="email" id="newLeaderEmail" placeholder="email@gmail.com" autocomplete="off"><select id="newLeaderFaction"></select><button class="btn btn-primary" id="addLeaderBtn">Добавить</button></div>
+          <div class="list-head manager-list-head"><div><h3 class="h-small">Привязанные лидеры</h3><span class="sub">Аватар берётся из профиля Google и может быть изменён самим пользователем.</span></div><span class="count-pill" id="leadersCount">0</span><label class="search-box search-box-sm"><span>⌕</span><input type="search" id="managerSearch" placeholder="Поиск…" autocomplete="off"></label></div>
           <div id="leadersListRoot"></div>
         </div>
       </section>
+
       <section class="panel" id="panel-settings">
-        <div class="card settings-panel">
-          <h3>Курируемые фракции</h3>
-          <span class="sub">Выберите фракции, с которыми работаете — остальные скроются из списка лидеров и отчётов. Пустой выбор = показывается всё. Настройка хранится локально в этом браузере.</span>
-          <div id="settingsCategories"></div>
-          <div class="settings-actions">
-            <button class="btn btn-ghost" id="selectAllBtn">Выбрать всё</button>
-            <button class="btn btn-ghost" id="deselectAllBtn">Сбросить</button>
-          </div>
-          <div class="chips-block">
-            <label>Ваш список</label>
-            <div class="selected-chips" id="myFactionsChips"></div>
-          </div>
+        <div class="page-head"><div><div class="eyebrow">SETTINGS</div><h2>Настройки</h2><p>Настройка списка курируемых фракций.</p></div></div>
+        <div class="card settings-panel"><h3>Курируемые фракции</h3><span class="sub">Пустой список = показывается всё. Выбор хранится локально.</span><div id="settingsCategories"></div><div class="settings-actions"><button class="btn btn-ghost" id="selectAllBtn">Выбрать всё</button><button class="btn btn-ghost" id="deselectAllBtn">Сбросить</button></div><div class="chips-block"><label>Ваш список</label><div class="selected-chips" id="myFactionsChips"></div></div></div>
+      </section>
+
+      <section class="panel" id="panel-support">
+        <div class="page-head"><div><div class="eyebrow">SUPPORT</div><h2>Баги и предложения</h2><p>Сообщите о проблеме или предложите улучшение панели.</p></div></div>
+        <div class="support-layout">
+          <div class="card form-card"><h3>Новая заявка</h3><div class="field"><label>Тип</label><select id="ticketType"><option value="bug">Баг</option><option value="suggestion">Предложение</option></select></div><div class="field"><label>Заголовок</label><input id="ticketTitle" maxlength="160" placeholder="Коротко о проблеме или идее"></div><div class="field"><label>Описание</label><textarea id="ticketDescription" rows="8" maxlength="5000" placeholder="Опишите ситуацию подробно"></textarea></div><button class="btn btn-primary btn-block" id="createTicketBtn">Отправить заявку</button></div>
+          <div class="card list-card"><div class="list-head"><div><h3>Мои заявки</h3><span class="sub">Ответ администратора и текущий статус будут отображаться здесь.</span></div><span class="count-pill" id="ticketsCount">0</span></div><div id="ticketsList"></div></div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-profile">
+        <div class="page-head"><div><div class="eyebrow">PROFILE</div><h2>Профиль</h2><p>Настройте отображаемое имя и аватар.</p></div></div>
+        <div class="card profile-card">
+          <div class="profile-preview"><div class="profile-avatar-wrap"><img id="profileAvatarPreview" class="profile-avatar" alt="Аватар"><div class="avatar-fallback" id="profileAvatarFallback"></div></div><div><h3 id="profileDisplayName">Пользователь</h3><p id="profileEmail"></p></div></div>
+          <div class="profile-form"><div class="field"><label>Отображаемое имя</label><input id="profileName" maxlength="80" placeholder="Ваше имя"></div><div class="field"><label>Аватар</label><input id="avatarFile" type="file" accept="image/png,image/jpeg,image/webp"></div><div class="profile-actions"><button class="btn btn-primary" id="saveProfileBtn">Сохранить профиль</button><button class="btn btn-ghost" id="resetProfileBtn">Сбросить к Google</button></div></div>
         </div>
       </section>
     </main>
   </div>
 </div>
 
-<div class="modal-overlay" id="confirmOverlay">
-  <div class="modal">
-    <h2 id="confirmTitle">Подтверждение</h2>
-    <p id="confirmText"></p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" id="confirmCancel">Отмена</button>
-      <button class="btn btn-danger" id="confirmOk">Удалить</button>
-    </div>
-  </div>
-</div>
-
+<div class="modal-overlay" id="confirmOverlay"><div class="modal"><h2 id="confirmTitle">Подтверждение</h2><p id="confirmText"></p><div class="modal-actions"><button class="btn btn-ghost" id="confirmCancel">Отмена</button><button class="btn btn-danger" id="confirmOk">Подтвердить</button></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script src="js/config.js"></script>
@@ -163,35 +161,7 @@
 <script src="js/reports.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/manager.js"></script>
+<script src="js/features.js"></script>
 <script src="js/app.js"></script>
-<script>
-(function(){
-  function replaceVacant(root){
-    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-    const nodes=[];
-    let node;
-    while(node=walker.nextNode()) nodes.push(node);
-    nodes.forEach(function(textNode){
-      if(textNode.nodeValue.includes('Вакантно')){
-        textNode.nodeValue=textNode.nodeValue.replaceAll('Вакантно','Не назначено');
-      }
-    });
-  }
-  replaceVacant(document.body);
-  new MutationObserver(function(mutations){
-    mutations.forEach(function(mutation){
-      mutation.addedNodes.forEach(function(node){
-        if(node.nodeType===Node.TEXT_NODE){
-          if(node.nodeValue.includes('Вакантно')){
-            node.nodeValue=node.nodeValue.replaceAll('Вакантно','Не назначено');
-          }
-        }else if(node.nodeType===Node.ELEMENT_NODE){
-          replaceVacant(node);
-        }
-      });
-    });
-  }).observe(document.body,{childList:true,subtree:true});
-})();
-</script>
 </body>
 </html>

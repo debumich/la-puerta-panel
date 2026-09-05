@@ -1,125 +1,243 @@
-/* ============================================================
-   Настройки куратора (только админ): выбор курируемых фракций.
-   Пустой список = показывается всё. Хранится в localStorage
-   этого браузера.
-   ============================================================ */
-
-function getMyFactions(){
-  try { return JSON.parse(localStorage.getItem('myFactions') || '[]'); }
-  catch (e){ return []; }
+function getMyFactions() {
+  try {
+    return JSON.parse(
+      localStorage.getItem(
+        "myFactions"
+      ) || "[]"
+    );
+  } catch (e) {
+    return [];
+  }
 }
 
-function setMyFactions(arr){
-  localStorage.setItem('myFactions', JSON.stringify(arr));
+function setMyFactions(arr) {
+  localStorage.setItem(
+    "myFactions",
+    JSON.stringify(arr)
+  );
+
   renderFactionToggles();
   renderMyFactionsChips();
   renderLeaders();
   renderReports();
 }
 
-/* GOV — сводный переключатель: включает/выключает три ключа разом */
-function getDisplayFactions(){
-  const list = getMyFactions();
-  const hasAllGov = GOV_KEYS.every(k => list.includes(k));
-  const filtered = list.filter(k => !GOV_KEYS.includes(k));
-  if (hasAllGov) filtered.unshift('GOV');
-  return filtered;
-}
+function toggleFactionSingle(key) {
+  const a =
+    getMyFactions();
 
-function toggleFactionSingle(key){
-  const current = getMyFactions();
-  const idx = current.indexOf(key);
-  if (idx > -1) current.splice(idx, 1);
-  else current.push(key);
-  setMyFactions(current);
-  toast(current.includes(key) ? `«${key}» добавлена` : `«${key}» убрана`);
-}
+  const i =
+    a.indexOf(key);
 
-function toggleGov(){
-  const current = getMyFactions();
-  const allSelected = GOV_KEYS.every(k => current.includes(k));
-  if (allSelected){
-    setMyFactions(current.filter(k => !GOV_KEYS.includes(k)));
-    toast('GOV убран');
+  if (i >= 0) {
+    a.splice(i, 1);
   } else {
-    const set = new Set(current);
-    GOV_KEYS.forEach(k => set.add(k));
-    setMyFactions(Array.from(set));
-    toast('GOV добавлен');
+    a.push(key);
+  }
+
+  setMyFactions(a);
+}
+
+function selectAllFactions() {
+  if (leaderData) {
+    setMyFactions(
+      Object.keys(
+        leaderData
+      )
+    );
   }
 }
 
-function removeGov(){
-  setMyFactions(getMyFactions().filter(k => !GOV_KEYS.includes(k)));
-  toast('GOV убран');
-}
-
-function selectAllFactions(){
-  if (!leaderData) return;
-  setMyFactions(Object.keys(leaderData));
-  toast('Выбраны все фракции');
-}
-
-function deselectAllFactions(){
+function deselectAllFactions() {
   setMyFactions([]);
-  toast('Выбор сброшен — показывается всё');
 }
 
-/* ---------- рендер ---------- */
+function toggleGov() {
+  const a =
+    getMyFactions();
 
-function renderFactionToggles(){
-  const container = document.getElementById('settingsCategories');
-  if (!leaderData){
-    container.innerHTML = '<div class="empty-state">Фракции появятся после загрузки данных с форума.</div>';
+  const all =
+    GOV_KEYS.every(
+      (k) => a.includes(k)
+    );
+
+  setMyFactions(
+    all
+      ? a.filter(
+          (k) =>
+            !GOV_KEYS.includes(k)
+        )
+      : Array.from(
+          new Set([
+            ...a,
+            ...GOV_KEYS
+          ])
+        )
+  );
+}
+
+function removeGov() {
+  setMyFactions(
+    getMyFactions().filter(
+      (k) =>
+        !GOV_KEYS.includes(k)
+    )
+  );
+}
+
+function renderFactionToggles() {
+  const c =
+    document.getElementById(
+      "settingsCategories"
+    );
+
+  if (!c || !leaderData) {
     return;
   }
-  const my = getMyFactions();
 
-  const groups = {};
-  Object.keys(leaderData).forEach(key => {
-    if (GOV_KEYS.includes(key)) return; // они схлопнуты в один переключатель GOV
-    const cat = leaderData[key].category || 'other';
-    (groups[cat] ??= []).push(key);
-  });
-  (groups['gov'] ??= []).unshift('__GOV__');
+  const current =
+    getMyFactions();
 
-  const sortedCats = Object.keys(groups).sort((a, b) =>
-    CATEGORY_ORDER.indexOf(a) - CATEGORY_ORDER.indexOf(b));
+  c.innerHTML =
+    CATEGORY_ORDER.map(
+      (cat) => {
+        const keys =
+          Object.keys(
+            leaderData
+          ).filter(
+            (k) =>
+              (leaderData[k]
+                .category ||
+                "other") ===
+                cat &&
+              !GOV_KEYS.includes(
+                k
+              )
+          );
 
-  let html = '';
-  sortedCats.forEach(cat => {
-    const items = groups[cat];
-    if (!items.length) return;
-    html += `<div class="settings-category">
-      <div class="cat-title">${CATEGORY_NAMES[cat] || escapeHtml(cat)}</div>
-      <div class="faction-toggle-grid">`;
-    items.forEach(key => {
-      if (key === '__GOV__'){
-        const active = GOV_KEYS.every(k => my.includes(k));
-        html += `<div class="faction-toggle-item${active ? ' active' : ''}" data-gov="1" role="button" tabindex="0">
-          <span class="indicator"></span><span class="label-text">GOV</span>
-        </div>`;
-      } else {
-        const active = my.includes(key);
-        html += `<div class="faction-toggle-item${active ? ' active' : ''}" data-key="${escapeHtml(key)}" role="button" tabindex="0" title="${escapeHtml(key)}">
-          <span class="indicator"></span><span class="label-text">${escapeHtml(key)}</span>
-        </div>`;
+        if (cat === "gov") {
+          keys.unshift(
+            "__GOV__"
+          );
+        }
+
+        if (!keys.length) {
+          return "";
+        }
+
+        return `
+          <div class="settings-category">
+
+            <div class="cat-title">
+              ${escapeHtml(
+                CATEGORY_NAMES[cat]
+              )}
+            </div>
+
+            <div class="faction-toggle-grid">
+
+              ${keys
+                .map((k) => {
+                  if (
+                    k ===
+                    "__GOV__"
+                  ) {
+                    const active =
+                      GOV_KEYS.every(
+                        (x) =>
+                          current.includes(
+                            x
+                          )
+                      );
+
+                    return `
+                      <div
+                        class="faction-toggle-item ${
+                          active
+                            ? "active"
+                            : ""
+                        }"
+                        data-gov="1"
+                      >
+                        <span class="indicator"></span>
+                        <span>GOV</span>
+                      </div>
+                    `;
+                  }
+
+                  const active =
+                    current.includes(
+                      k
+                    );
+
+                  return `
+                    <div
+                      class="faction-toggle-item ${
+                        active
+                          ? "active"
+                          : ""
+                      }"
+                      data-key="${escapeHtml(
+                        k
+                      )}"
+                      title="${escapeHtml(
+                        k
+                      )}"
+                    >
+                      <span class="indicator"></span>
+                      <span class="label-text">
+                        ${escapeHtml(
+                          k
+                        )}
+                      </span>
+                    </div>
+                  `;
+                })
+                .join("")}
+
+            </div>
+
+          </div>
+        `;
       }
-    });
-    html += `</div></div>`;
-  });
-  container.innerHTML = html;
+    ).join("");
 }
 
-function renderMyFactionsChips(){
-  const container = document.getElementById('myFactionsChips');
-  const display = getDisplayFactions();
-  if (!display.length){
-    container.innerHTML = '<span class="empty-chips">Не выбрано ни одной фракции — показывается всё.</span>';
+function renderMyFactionsChips() {
+  const c =
+    document.getElementById(
+      "myFactionsChips"
+    );
+
+  if (!c) {
     return;
   }
-  container.innerHTML = display.map(f => f === 'GOV'
-    ? `<span class="chip">GOV<span class="remove" data-remove-gov="1" title="Убрать">✕</span></span>`
-    : `<span class="chip">${escapeHtml(f)}<span class="remove" data-remove-key="${escapeHtml(f)}" title="Убрать">✕</span></span>`
-  ).join('');
+
+  const a =
+    getMyFactions();
+
+  c.innerHTML = a.length
+    ? a
+        .map(
+          (k) => `
+            <span class="chip">
+              ${escapeHtml(k)}
+              <span
+                class="remove"
+                data-remove-key="${escapeHtml(
+                  k
+                )}"
+              >
+                ×
+              </span>
+            </span>
+          `
+        )
+        .join("")
+    : `
+      <span class="empty-chips">
+        Не выбрано ни одной фракции —
+        показывается всё.
+      </span>
+    `;
 }

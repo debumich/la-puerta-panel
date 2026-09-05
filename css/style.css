@@ -421,7 +421,7 @@ h2,h3{margin:0}
   body.sidebar-open .sidebar{transform:none}
   body.sidebar-open .sidebar-backdrop{display:block}
   .main{margin-left:0}
-  .menu-btn{display:inline-flex}
+  .menu-btn{display:inline-flex !important}
   .content{padding:16px}
   .topbar{padding:10px 14px}
   .topbar-right .faction-badge{display:none}
